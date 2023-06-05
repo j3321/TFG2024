@@ -1,0 +1,6 @@
+FZP3: monocristalina float zone pasivada, tv muy alto (aprox 2000 us), medida en transient
+mono1: monocristalina CZ pasivada, tv alto (400 us), medida en Generalized (1/64)
+1F_P_D_P_D_IE_T: UMG pasivada, tv alto (600 us), medida en Generalized (1/64)
+multi36_TTL: multicristalina pasivada, tv medio (100 us), medida en QSSPC con el flash en TTL
+multi96: multicristalina pasivada, tv bajo (50 us), medida en QSSPC con el flash en 1/1
+5A: UMG sin pasivar, tv muy bajo e inyección muy baja (aprox 1 us)
