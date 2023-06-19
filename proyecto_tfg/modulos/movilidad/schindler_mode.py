@@ -2,6 +2,8 @@
 # una lista de densidad de portadores
 #Results is in cm2/Vs
 import math
+from .. import input_values
+
 
 ###########################
 # VALORES PARA ELECTRONES #
@@ -49,19 +51,17 @@ R5 = -0.01552
 R6 = 0.6478
 FCW = 2.459
 FBH = 3.828
-NA = 1e+17 #unidades [cm^-3] 
-ND = 1e+17 #unidades [cm^-3] 
 NREF3 = 1.276e+17
 BETA1 = 24.82
 CLREF = 1.092
-NDOP=1e+17 #unidades [cm^-3]
+NDOP=input_values.NDOP
 NC = 3e+19 #unidades [cm^-3]
 NV = 1e+19 #unidades [cm^-3]
 EG = 1.1242 #Energy Bandgap unidades [eV]
 K = 8.617333262145e-5 #cte Boltzmann unidades [eV/K]
-C = NA + ND
-CI = (NA + ND)/(C)
-CIRT = (NA + ND)/(C)
+C = NDOP + NDOP
+CI = (NDOP + NDOP)/(C)
+CIRT = (NDOP + NDOP)/(C)
 
 
 def schindler_mode(temperatura, densidad_portadores):
@@ -92,14 +92,14 @@ def schindler_mode(temperatura, densidad_portadores):
         Uice = Uice1*Uice2
         # Variable Z
         Zh1 = (1)
-        Zh2 = (1)/(CIH + (NREFIH**2)/(NA))
+        Zh2 = (1)/(CIH + (NREFIH**2)/(NDOP))
         Zh = Zh1 + Zh2
         Ze1 = (1)
-        Ze2 = (1)/(CIE + (NREFIE**2)/(ND))
+        Ze2 = (1)/(CIE + (NREFIE**2)/(NDOP))
         Ze = Ze1 + Ze2
         # Variable Nisc
-        Nisch = NA + ND + n0h
-        Nisce = NA + ND + p0e
+        Nisch = NDOP + NDOP + n0h
+        Nisce = NDOP + NDOP + p0e
         # Variable Pcw
         Pcwh1 = 3.97e+13
         Pcwh2 = ((1)/((Zh**3) * Nisch * (temperatura/300)**3))**(2/3)
@@ -146,27 +146,27 @@ def schindler_mode(temperatura, densidad_portadores):
         GPe3 = (GPe3_num)/(GPe3_denom)
         GPe = (GPe1) - (GPe2) + (GPe3)
         # Variable Nisceff 
-        Nisceffh = NA + GPh*ND + (n0h/FPh)
-        Nisceffe = ND + GPe*NA + (p0e/FPe)
+        Nisceffh = NDOP + GPh*NDOP + (n0h/FPh)
+        Nisceffe = NDOP + GPe*NDOP + (p0e/FPe)
         # Variables UiL
         UiLh = UMAXH
         UiLe = UMAXE
         # Variables UiN
-        # UiNh = (UMAXH**2)/(UMAXH-UMINH)####################
+        # UiNh = (UMAXH**2)/(UMAXH-UMINH)
         # UiNe = (UMAXE**2)/(UMAXE-UMINE)
         # Variables UiDAj
         UiDAjh1 = (Uich)
         UiDAjh2 = (n0h+p0h)/Nisceffh
         UiDAjh3 = (UiNh*Nisch)/Nisceffh
         UiDAjh4 = (NREF1H/Nisch)**(ALPHA1H)
-        UiDAjh5 = (NA + ND)/NREF3
+        UiDAjh5 = (NDOP + NDOP)/NREF3
         UiDAjh6 = ((CIRT-1)/CLREF)**(BETA1)
         UiDAjh = UiDAjh1 * UiDAjh2 + UiDAjh3 * ((UiDAjh4 + UiDAjh5*UiDAjh6)**(-1))
         UiDAje1 = (Uice)
         UiDAje2 = (n0e+p0e)/Nisceffe
         UiDAje3 = (UiNe*Nisce)/Nisceffe
         UiDAje4 = (NREF1E/Nisce)**(ALPHA1E)
-        UiDAje5 = (NA + ND)/NREF3
+        UiDAje5 = (NDOP + NDOP)/NREF3
         UiDAje6 = ((CIRT-1)/CLREF)**(BETA1)
         UiDAje = UiDAje1 * UiDAje2 + UiDAje3 * ((UiDAje4 + UiDAje5*UiDAje6)**(-1))
         #Variables Usch

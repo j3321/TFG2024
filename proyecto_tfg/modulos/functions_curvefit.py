@@ -4,6 +4,8 @@ import statsmodels.api as sm
 import numpy as np
 from scipy.optimize import curve_fit
 import math
+from sklearn.linear_model import LinearRegression
+
 
 # Definición de constantes
 NDOP=1e+17 #unidades [cm^-3]
@@ -55,6 +57,56 @@ def custom_curve_fit(lista_densidad_portadores, lista_tiempo_srh):
     J0E = popt[1]
     valores_ajustados = linear_func(lista_valor_independiente, SRH, J0E)
     return SRH, J0E, valores_ajustados
+
+def custom_linear_fit(lista_densidad_portadores, lista_tiempo_srh):
+    # Se calcula el valor independiente conocido
+    NI = (math.sqrt(NC*NV)) * ((math.e)**((-EG)/(2*K*temperatura)))
+    lista_valor_independiente = []
+    for i in range(len(lista_densidad_portadores)):
+        indice = (NDOP + lista_densidad_portadores[i])/(Q*W*(math.pow(NI,2)))
+        lista_valor_independiente.append(indice)
+    
+    # Se formatean a arrarys numpy
+    lista_valor_independiente_np = np.array(lista_valor_independiente).reshape(-1, 1)
+    lista_tiempo_srh_np = np.array(lista_tiempo_srh)
+    
+    # Crear un objeto de regresión lineal y ajustar el modelo
+    regresion_lineal = LinearRegression()
+    regresion_lineal.fit(lista_valor_independiente_np, lista_tiempo_srh_np)
+    
+    # Obtener los coeficientes de la regresión
+    SRH = regresion_lineal.coef_[0]
+    J0E = regresion_lineal.intercept_
+    
+    # Calcular los valores ajustados
+    valores_ajustados = regresion_lineal.predict(lista_valor_independiente_np)
+    
+    return SRH, J0E, valores_ajustados
+
+def custom_gradient(lista_densidad_portadores, lista_tiempo_srh):
+     # Se calcula el valor independiente conocido
+    NI = (math.sqrt(NC*NV)) * ((math.e)**((-EG)/(2*K*temperatura)))
+    lista_valor_independiente = []
+    for i in range(len(lista_densidad_portadores)):
+        indice = (NDOP + lista_densidad_portadores[i])/(Q*W*(math.pow(NI,2)))
+        lista_valor_independiente.append(indice)
+
+    # Se formatean a arrays numpy
+    lista_valor_independiente_np = np.array(lista_valor_independiente)
+    lista_tiempo_srh_np = np.array(lista_tiempo_srh)
+
+    # Se calcula la pendiente
+    J0e = np.gradient(lista_tiempo_srh_np, lista_valor_independiente_np)
+
+    # Se calcula el término independiente
+
+    SRH = lista_tiempo_srh_np - J0e * lista_valor_independiente_np
+
+    lista_srh_ajustada = SRH + J0e*lista_valor_independiente_np
+
+    return SRH, J0e, lista_srh_ajustada
+
+
 
 
 

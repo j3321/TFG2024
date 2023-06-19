@@ -5,6 +5,8 @@ from .movilidad import sinton_mode
 from .movilidad import dorkel_mode
 from .movilidad import klaassen_mode
 from .movilidad import schindler_mode
+from . import input_values
+
 ###########
 # DEF CTE #
 ###########
@@ -14,24 +16,25 @@ B = 0.034
 OFFSET= 0.038
 DARK_VOLTAGE = 0 # primero se usa este valor, posteriormente habrá que volver a definirlo
 AIR_VOLTAGE = 1 # quitarlo o no?
-OPTICAL_FACTOR = 0.70
 C = OFFSET
 Q = 1.6e-19 #[Coulomb]
 K = DARK_VOLTAGE - OFFSET
-W= 0.0300 #Unidades : [cm]
 
 # Variables para el calculo del tiempo intrínseco
 N0EEHN0 = 3.3e+17 # unidades [cm^-3]
 N0EEHP0 = 7.0e+17 # unidades [cm^-3]
 BLOW = 4.73e-15 # unidades[cm^3/s]
 BREL = 1
-NDOP=1e+17 #unidades [cm^-3]
-# NI = 1e+10 #unidades [cm^-3]
+NDOP=1e+19 #unidades [cm^-3]
 NC = 3e+19 #unidades [cm^-3]
 NV = 1e+19 #unidades [cm^-3]
 NA = 1e+19 #unidades [cm^-3] FALTA COMPROBAR!
 EG = 1.1242 #Energy Bandgap unidades [eV]
 K = 8.617333262145e-5 #cte Boltzmann unidades [eV/K]
+
+W = input_values.W
+OPTICAL_FACTOR = input_values.OPTICAL_FACTOR
+NDOP = input_values.NDOP
 
 # Se pasa como parámetro Vref y se calcula la tasa de generación.
 def generacion(Vref):

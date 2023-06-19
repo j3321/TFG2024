@@ -2,6 +2,8 @@
 # y una lista de densidad de portadores
 # Results is in cm2/Vs
 import math
+from .. import input_values
+
 
 #######################
 # VALORES PARA p-type #
@@ -22,8 +24,7 @@ BN = 1.52e+15
 ####################
 # VALORES GLOBALES #
 ####################
-NDOP=1e+17 #unidades [cm^-3]
-# NI = 1e+10 #unidades [cm^-3]
+NDOP=input_values.NDOP
 NC = 3e+19 #unidades [cm^-3]
 NV = 1e+19 #unidades [cm^-3]
 EG = 1.1242 #Energy Bandgap unidades [eV]
@@ -41,7 +42,7 @@ def dorkel_mode(temperatura, densidad_portadores):
         p0p = ((1/2) * ( NDOP + math.sqrt(NDOP**2 + 4*(NI**2)))) + densidad_portadores[i]
         n0p = (NI**2)/p0p
         uLp = (UL0P) * ((temperatura/300)**(-ALPHAP))
-        uIp = ((AP) *((temperatura**(3/2))/NDOP)) * ((math.log10( 1 + ((BP *temperatura**2)/NDOP))) - ((BP * temperatura**2)/(NDOP+ BP * temperatura**2)))** (-1)
+        uIp = ((AP) *((temperatura**(3/2))/NDOP)) * (((math.log10( 1 + ((BP *temperatura**2)/NDOP))) - ((BP * temperatura**2)/(NDOP+ BP * temperatura**2)))** (-1))
         Uccsp = ((2e+17 * (temperatura**3/2))/math.sqrt(p0p * n0p)) * ((math.log10(1 + 8.28e+8 * temperatura**2 * ((p0p * n0p)**(-1/3))))**(-1))
         Xp = math.sqrt((6 * uLp * (uIp + Uccsp)) / (uIp * Uccsp))
         up = (uLp) * ((1.025/(1+ (Xp/1.68)**1.43) - 0.025))

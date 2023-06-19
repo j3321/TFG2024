@@ -2,6 +2,7 @@
 # una lista de densidad de portadores
 #Results is in cm2/Vs
 import math
+from .. import input_values
 
 ###########################
 # VALORES PARA ELECTRONES #
@@ -49,14 +50,12 @@ R5 = -0.01552
 R6 = 0.6478
 FCW = 2.459
 FBH = 3.828
-NA = 1e+17#1e+15 #unidades [cm^-3] FALTA COMPROBAR!
-ND = 1e+17#2.4771e+15#1e+15 #unidades [cm^-3] FALTA COMPROBAR!
-NDOP=1e+17 #unidades [cm^-3]
+NDOP=input_values.NDOP
 NC = 3e+19 #unidades [cm^-3]
 NV = 1e+19 #unidades [cm^-3]
 EG = 1.1242 #Energy Bandgap unidades [eV]
 K = 8.617333262145e-5 #cte Boltzmann unidades [eV/K]
-C = NA + ND
+C = NDOP + NDOP
 
 def klaassen_mode(temperatura, densidad_portadores):
     lista_movilidad_total = []
@@ -77,11 +76,11 @@ def klaassen_mode(temperatura, densidad_portadores):
         Uich = ((UMINH*UMAXH)/(UMAXH - UMINH)) * ((temperatura/300)**(1/2))
         Uice = ((UMINE*UMAXE)/(UMAXE - UMINE)) * ((temperatura/300)**(1/2))
         # Variablez Z
-        Zh = (1) + ((1)/(CIH + ((NREFIH**2)/NA)))
-        Ze = (1) + ((1)/(CIE + ((NREFIE**2)/ND)))
+        Zh = (1) + ((1)/(CIH + ((NREFIH**2)/NDOP)))
+        Ze = (1) + ((1)/(CIE + ((NREFIE**2)/NDOP)))
         # Variables Nisc
-        Nisch = NA + ND + n0h
-        Nisce = NA + ND + p0e
+        Nisch = NDOP + NDOP + n0h
+        Nisce = NDOP + NDOP + p0e
         # Variables Pcw
         Pcwh = (3.97e+13) * (((1)/((Zh**3) * Nisch * ((temperatura/300)**3))) ** (2/3))
         Pcwe = (3.97e+13) * (((1)/((Ze**3) * Nisce * ((temperatura/300)**3))) ** (2/3))
@@ -116,8 +115,8 @@ def klaassen_mode(temperatura, densidad_portadores):
         GPe3 = (GPe3_num)/(GPe3_denom)
         GPe = (GPe1) - (GPe2) + (GPe3)
         # Variables Nisceff
-        Nisceffh = (NA) + (GPh*ND) + (n0h/FPh)
-        Nisceffe = (ND) + (GPe*NA) + (p0e/FPe)
+        Nisceffh = (NDOP) + (GPh*NDOP) + (n0h/FPh)
+        Nisceffe = (NDOP) + (GPe*NDOP) + (p0e/FPe)
         # Variables UiL
         UiLh = UMAXH
         UiLe = UMAXE

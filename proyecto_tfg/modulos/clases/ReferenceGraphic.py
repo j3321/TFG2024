@@ -2,6 +2,7 @@
 # y tratados posteriormente
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 
 class ReferenceGraphic:
     def __init__(self):
@@ -26,9 +27,11 @@ class ReferenceGraphic:
             # lista_nueva = datos.loc[max_index:]
             
         # Extraer columnas de datos
+        datos = datos.loc[datos.iloc[:,1] >=0]
         time = datos.iloc[:, 0]
         photovoltage = datos.iloc[:, 1]
         reference_voltage = datos.iloc[:, 2]
+        reference_voltage = np.where(reference_voltage < 0, 0, reference_voltage)
 
         # Crear una figura y un eje en la figura
         fig = plt.figure(figsize=(8, 6))

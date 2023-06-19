@@ -1,7 +1,8 @@
 # Se define la movilidad Sinton que recibe como parámetro una lista de la densidad de portadores
 #Result is in cm2/Vs
 import math
-NDOP=1e+17 #unidades [cm^-3]
+from .. import input_values
+NDOP=input_values.NDOP
 def sinton_mode(temperatura, densidad_portadores):
     lista_movilidad = []
     for i in range(len(densidad_portadores)):
