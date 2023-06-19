@@ -232,7 +232,7 @@ class LifetimeGraphic:
             #Limpiar la figura y graficar los datos actualizados
             ax.clear()
             #ax.loglog(lista_densidarPortadores_filtrada_variable, lista_srh_ajustada1, marker ="8", markersize = 6, label ="curve-fit", color ="yellow")
-            ax.semilogx(lista_densidadPortadores_variable, lista_srh_ajustada, marker ="8", markersize = 6, label ="curve-fit", color ="purple")
+            ax.semilogx(lista_densidadPortadores_variable, lista_srh_ajustada, marker ="8", markersize = 9, label ="curve-fit", color ="purple")
             ax.semilogx(lista_densidarPortadores_filtrada_suave,lista_tiempo_srh_suave, marker = "8", markersize = 6, label = "curva-suave", color ="black")
             #ax.loglog(lista_densidadPortadores_variable, lista_tiempo_recombinacion_micros_variable, marker ='*', markersize=6, label="Lifetime", color ="green")
             #ax.loglog(lista_densidarPortadores_filtrada_variable, lista_tiempo_intrinseco_micros_variable, marker ='_', markersize=6, label="Intrinsic Lifetime", color ="blue")
@@ -274,7 +274,7 @@ class LifetimeGraphic:
             #Limpiar la figura y graficar los datos actualizados
             ax.clear()
             #ax.loglog(lista_densidarPortadores_filtrada_variable, lista_srh_ajustada1, marker ="8", markersize = 6, label ="curve-fit", color ="yellow")
-            ax.semilogx(lista_densidadPortadores_variable, lista_srh_ajustada, marker ="8", markersize = 6, label ="curve-fit", color ="purple")
+            ax.semilogx(lista_densidadPortadores_variable, lista_srh_ajustada, marker ="8", markersize = 9, label ="curve-fit", color ="purple")
             ax.semilogx(lista_densidarPortadores_filtrada_suave,lista_tiempo_srh_suave, marker = "8", markersize = 6, label = "curva-suave", color ="black")
             #ax.loglog(lista_densidadPortadores_variable, lista_tiempo_recombinacion_micros_variable, marker ='*', markersize=6, label="Lifetime", color ="green")
             #ax.loglog(lista_densidarPortadores_filtrada_variable, lista_tiempo_intrinseco_micros_variable, marker ='_', markersize=6, label="Intrinsic Lifetime", color ="blue")
