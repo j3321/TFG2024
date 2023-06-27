@@ -157,7 +157,6 @@ def tiempo_intrinseco(densidad_portadores, temperatura):
     geehn0 = (1) + (13)*(1 - math.tanh(math.pow(n0/N0EEHN0, 0.66)))
     geehp0 = (1) + (7.5)*(1 - math.tanh(math.pow(p0/N0EEHP0, 0.63)))
     beta = 1/(K*temperatura)
-    nieff = (NI)*((math.e)**(beta*EG/2))
     for i in range(len(densidad_portadores)):
         p = (p0) + densidad_portadores[i]
         n = (n0) + densidad_portadores[i]
@@ -175,7 +174,7 @@ def tiempo_srh(tiempo_intrinseco, tiempo_recombinacion):
     lista_diferencia_tiempo = []
     for i in range(len(tiempo_intrinseco)):
         indice = 1/tiempo_recombinacion[i] - 1/tiempo_intrinseco[i]
-        lista_diferencia_tiempo.append(1/indice)
+        lista_diferencia_tiempo.append(indice)
     return lista_diferencia_tiempo
     
         

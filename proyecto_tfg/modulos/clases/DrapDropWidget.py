@@ -15,7 +15,7 @@ class DragDropWidget(QWidget):
         self.choice = None
 
     def initUI(self):
-        self.setWindowTitle('Importa el archivo que quieres medir')
+        self.setWindowTitle('Importa el archivo que quieres analizar')
         self.setGeometry(300, 300, 450, 550)
 
         # Crear una etiqueta para mostrar el archivo arrastrado
@@ -26,7 +26,7 @@ class DragDropWidget(QWidget):
         self.label.setFont(font)
 
         # Crear un botón para imprimir
-        self.Measurebutton = QPushButton("Medir vida útil usando:", self)
+        self.Measurebutton = QPushButton("Analizar tiempo de vida usando:", self)
         self.Measurebutton.clicked.connect(self.showDialog)  # Conectar a la función que muestra el cuadro de diálogo
         self.Measurebutton.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.Measurebutton.setFixedHeight(70)
