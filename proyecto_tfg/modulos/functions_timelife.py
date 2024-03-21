@@ -61,11 +61,13 @@ def densidad_portadores(fotoconductividad, movilidad_inicial, choice, temperatur
         "Sinton-Intrinseco": sinton_mode.sinton_mode,
         "Dorkel-Intrinseco": dorkel_mode.dorkel_mode,
         "Klaassen-Intrinseco": klaassen_mode.klaassen_mode,
-        "Schindler-Intrinseco": schindler_mode.schindler_mode
+        "Schindler-Intrinseco": schindler_mode.schindler_mode,
+        "Sinton-SRH": sinton_mode.sinton_mode,
+        "SRH-X":sinton_mode.sinton_mode
     }
     funcion_modo = funciones_modos.get(choice)
     if not funcion_modo:
-        raise ValueError("Opción de choice inválida.")
+        raise ValueError("Opcion de choice invalida.")
     for fotoconduc in fotoconductividad:
         densidad_portadores0 = fotoconduc / (Q * W * movilidad_inicial)
         lista_densidad_portadores0.append(densidad_portadores0)
@@ -177,9 +179,15 @@ def tiempo_srh(tiempo_intrinseco, tiempo_recombinacion):
         lista_diferencia_tiempo.append(indice)
     return lista_diferencia_tiempo
     
-        
-
-    
-
-
-        
+def calculo_X(densidad_portadores, temperatura):
+    # Se definen las variables que se van a usar
+    lista_valores_X = []
+    NI = (math.sqrt(NC*NV)) * ((math.e)**((-EG)/(2*K*temperatura)))
+    p0 = NDOP
+    n0 = math.pow(NI,2)/NDOP
+    for i in range(len(densidad_portadores)):
+        p = (p0) + densidad_portadores[i]
+        n = (n0) + densidad_portadores[i]
+        valor_x =n/p
+        lista_valores_X.append(valor_x)
+    return lista_valores_X
