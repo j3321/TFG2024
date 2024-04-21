@@ -5,10 +5,11 @@ import numpy as np
 from scipy.optimize import curve_fit
 import math
 from sklearn.linear_model import LinearRegression
+from . import input_values
 
 
 # Definición de constantes
-NDOP=1e+17 #unidades [cm^-3]
+NDOP=1e+15 #unidades [cm^-3]
 Q = 1.6e-19 #[Coulomb]
 W= 0.0300 #Unidades : [cm]
 NC = 3e+19 #unidades [cm^-3]
@@ -16,6 +17,9 @@ NV = 1e+19 #unidades [cm^-3]
 EG = 1.1242 #Energy Bandgap unidades [eV]
 K = 8.617333262145e-5 #cte Boltzmann unidades [eV/K]
 temperatura = 300
+
+W = input_values.W
+NDOP = input_values.NDOP
 
 # Se suaviza la curva 
 def suavizado_curva(lista_tiempo_srh, lista_densidad_portadores):
@@ -131,6 +135,29 @@ def get_SRH(lista_densidad_portadores, lista_tiempo_srh):
         lista_srh_independiente.append(j)
 
     return lista_srh_independiente 
+
+#Calculo 1/tiempo SRH
+def get_SRH_con_J0e(lista_densidad_portadores, lista_tiempo_srh, J0e):
+     # Se calcula el valor independiente conocido
+    NI = (math.sqrt(NC*NV)) * ((math.e)**((-EG)/(2*K*temperatura)))
+    lista_valor_independiente = []
+    for i in range(len(lista_densidad_portadores)):
+        indice = (NDOP + lista_densidad_portadores[i])/(Q*W*(math.pow(NI,2)))
+        lista_valor_independiente.append(indice)
+
+    # Se formatean a arrays numpy
+    lista_valor_independiente_np = np.array(lista_valor_independiente)
+    lista_tiempo_srh_np = np.array(lista_tiempo_srh)
+
+    # Se calcula el término independiente
+    SRH = lista_tiempo_srh_np -  ((10 ** (-J0e)) * lista_valor_independiente_np)
+
+    # Se crea una lista con los valores srh totalmente independiente de los demas valores(intrinseco,auger y superficial)
+    lista_srh_independiente= []
+    for j in SRH:
+        lista_srh_independiente.append(j)
+
+    return lista_srh_independiente, lista_valor_independiente
 
 
 

@@ -96,9 +96,9 @@ class DragDropWidget(QWidget):
                     val_temp, ok_temp = QInputDialog.getDouble(self, "Temperatura", "Ingrese el valor de la temperatura en Celsius:")
                     if ok_temp:
                         # Obtener el valor de Joe
-                        val_Joe, ok_Joe = QInputDialog.getDouble(self, "Joe", "Ingrese el valor de Joe:")
-                        if ok_Joe:
-                            funciones_modo[choice](self.choice, val_temp, val_Joe)  # Llamar a la función con los valores de temperatura y Joe
+                        val_J0e, ok_J0e = QInputDialog.getDouble(self, "J0e", "Ingrese el valor de J0e:")
+                        if ok_J0e:
+                            funciones_modo[choice](self.choice, val_temp, val_J0e)  # Llamar a la función con los valores de temperatura y Joe
                         break
                 else:
                     val, ok = QInputDialog.getDouble(self, "Temperatura", "Ingrese el valor de la temperatura en Celsius:")
