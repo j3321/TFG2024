@@ -150,7 +150,9 @@ def get_SRH_con_J0e(lista_densidad_portadores, lista_tiempo_srh, J0e):
     lista_tiempo_srh_np = np.array(lista_tiempo_srh)
 
     # Se calcula el término independiente
-    SRH = lista_tiempo_srh_np -  ((10 ** (-J0e)) * lista_valor_independiente_np)
+    SRH_denom = lista_tiempo_srh_np -  ((10 ** (-J0e)) * lista_valor_independiente_np)
+    SRH = 1 / SRH_denom
+
 
     # Se crea una lista con los valores srh totalmente independiente de los demas valores(intrinseco,auger y superficial)
     lista_srh_independiente= []
