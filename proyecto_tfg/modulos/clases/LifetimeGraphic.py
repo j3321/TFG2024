@@ -5,7 +5,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.widgets import Slider
 from matplotlib.widgets import RangeSlider
+from matplotlib.widgets import CheckButtons
+from matplotlib.widgets import Button
 from matplotlib.widgets import TextBox
+from PyQt5.QtWidgets import QMessageBox
 from .. import functions_timelife
 from .. import functions_curvefit
 from .. import excel_formatter
@@ -197,118 +200,117 @@ class LifetimeGraphic:
                 temperatura-=50
         plt.show(block=False)
 
-    def pintar_tiempo_intrinseco(self, choice, temperatura):
-        lista_densidadPortadores = self.densidad_portadoresList(choice, temperatura)
-        lista_densidarPortadores_filtrada = [num for num in lista_densidadPortadores if num >=0]
-        lista_tiempo_recombinacion = self.tiempo_recombinacionList(choice, temperatura)
-        #lista_tiempo_recombinacion_micros = [t * 1e+6 for t in lista_tiempo_recombinacion]  # Conversión a microsegundos
-        lista_tiempo_intrinseco = self.tiempo_intrinsecoList(choice,temperatura)
-        #lista_tiempo_intrinseco_micros = [t * 1e+6 for t in lista_tiempo_intrinseco] 
-        lista_tiempo_srh = self.tiempo_srhList(choice, temperatura)
-        #lista_tiempo_srh_micros = [t * 1e+6 for t in lista_tiempo_srh] 
-        fig = plt.figure(figsize=(12, 8))
-        ax = fig.add_subplot()
-        # Configurar los límites del deslizador
-        slider_ax1 = plt.axes([0.15, 0.0001, 0.7, 0.03])  # Modificar las coordenadas y del deslizador
-        slider1 = Slider(slider_ax1, 'Cota superior',1 , len(lista_densidadPortadores), valinit=len(lista_densidadPortadores),valstep=1, color ="green")
-        slider_ax2 = plt.axes([0.15, 0.95, 0.7, 0.03])  # Modificar las coordenadas y del deslizador
-        slider2 = Slider(slider_ax2, 'Cota inferior',1 , len(lista_densidadPortadores), valinit=len(lista_densidadPortadores),valstep=1, color ="blue")
-        global n
-        global s
-        def update_graph1(val,slider):
-            global n
-            global s
-            # Obtener el valor actual del deslizador
-            n = int(val)
-            # Obtener los subconjuntos de datos a mostrar
-            lista_densidadPortadores_variable = lista_densidadPortadores[s:n]
-            lista_densidarPortadores_filtrada_variable = lista_densidarPortadores_filtrada[s:n]
-            lista_tiempo_recombinacion_micros_variable = lista_tiempo_recombinacion[s:n]
-            lista_tiempo_intrinseco_micros_variable = lista_tiempo_intrinseco[s:n]
-            lista_tiempo_srh_micros_variable = lista_tiempo_srh[s:n]
-            # Se define la curva suavizada llamando a función
-            lista_tiempo_srh_suave, lista_densidarPortadores_filtrada_suave = functions_curvefit.suavizado_curva(lista_tiempo_srh_micros_variable, lista_densidarPortadores_filtrada_variable)
-            #indice = functions_curvefit.ajuste_minimo_curva(lista_tiempo_srh_micros_variable,lista_tiempo_srh_suave)
-            # Mediante ajuste de curvas calculamos los valores que mejor se ajustan y se almacenan en un 
-            # archivo los valores finales
-            SRH, J0E, lista_srh_ajustada = functions_curvefit.custom_gradient(lista_densidadPortadores_variable,lista_tiempo_srh_micros_variable)
-            with open("Valores_SRH_J0E.csv", "w") as archivo:
-                archivo.write(f"Valor SRH, Valor J0E\n")  # Escribir encabezados si es necesario
-                archivo.write(f"{SRH}, {J0E}\n")  # Escribir los valores
-            # Almacenar los datos en un dataframe
-            data = pd.DataFrame({"Carrier Density (cm^-3) Intrinseco":lista_densidarPortadores_filtrada_variable, "Lifetime (us) Intrinseco":lista_tiempo_intrinseco_micros_variable,"Carrier Density (cm^-3) Ajustada":lista_densidarPortadores_filtrada_suave, "Lifetime (us) Ajustada": lista_srh_ajustada, "Carrier Density (cm^-3) Suave":lista_densidarPortadores_filtrada_suave, "Lifetime (us) Suave": lista_tiempo_srh_suave  })
-            # Guardar los datos en un archivo Excel
-            data.to_excel(f"Lifetime_Intrinseco.xlsx", index=False)
-            #Limpiar la figura y graficar los datos actualizados
-            ax.clear()
-            ax.loglog(lista_densidarPortadores_filtrada_variable,J0E, color ="green")
-            #ax.loglog(lista_densidarPortadores_filtrada_variable, lista_srh_ajustada1, marker ="8", markersize = 6, label ="curve-fit", color ="yellow")
-            #ax.semilogx(lista_densidadPortadores_variable, lista_srh_ajustada, marker ="8", markersize = 9, label ="curve-fit", color ="purple")
-            #ax.semilogx(lista_densidarPortadores_filtrada_suave,lista_tiempo_srh_suave, marker = "8", markersize = 6, label = "curva-suave", color ="black")
-            #ax.loglog(lista_densidadPortadores_variable, lista_tiempo_recombinacion_micros_variable, marker ='*', markersize=6, label="Lifetime", color ="green")
-            #ax.loglog(lista_densidarPortadores_filtrada_variable, lista_tiempo_intrinseco_micros_variable, marker ='_', markersize=6, label="Intrinsic Lifetime", color ="blue")
-            #ax.semilogx(lista_densidarPortadores_filtrada_variable, lista_tiempo_srh_micros_variable, marker ='s', markersize=4, label="SRH Lifetime", color ="red")
-            ax.set_title(f"Lifetime & Intrinsic Lifetime -{choice} Mode") 
-            ax.set_xlabel("Carrier Density (cm^-3)")
-            ax.set_ylabel("J0 Acm^-2")
-            ax.grid(which='both', axis='both', linestyle=':', linewidth=0.5)
-            ax.legend()
-            plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
-            fig.canvas.draw_idle()
-            plt.pause(0.1)
+    # def pintar_tiempo_intrinseco(self, choice, temperatura):
+    #     lista_densidadPortadores = self.densidad_portadoresList(choice, temperatura)
+    #     lista_densidarPortadores_filtrada = [num for num in lista_densidadPortadores if num >=0]
+    #     lista_tiempo_recombinacion = self.tiempo_recombinacionList(choice, temperatura)
+    #     #lista_tiempo_recombinacion_micros = [t * 1e+6 for t in lista_tiempo_recombinacion]  # Conversión a microsegundos
+    #     lista_tiempo_intrinseco = self.tiempo_intrinsecoList(choice,temperatura)
+    #     #lista_tiempo_intrinseco_micros = [t * 1e+6 for t in lista_tiempo_intrinseco] 
+    #     lista_tiempo_srh = self.tiempo_srhList(choice, temperatura)
+    #     #lista_tiempo_srh_micros = [t * 1e+6 for t in lista_tiempo_srh] 
+    #     fig = plt.figure(figsize=(12, 8))
+    #     ax = fig.add_subplot()
+    #     # Configurar los límites del deslizador
+    #     slider_ax1 = plt.axes([0.15, 0.0001, 0.7, 0.03])  # Modificar las coordenadas y del deslizador
+    #     slider1 = Slider(slider_ax1, 'Cota superior',1 , len(lista_densidadPortadores), valinit=len(lista_densidadPortadores),valstep=1, color ="green")
+    #     slider_ax2 = plt.axes([0.15, 0.95, 0.7, 0.03])  # Modificar las coordenadas y del deslizador
+    #     slider2 = Slider(slider_ax2, 'Cota inferior',1 , len(lista_densidadPortadores), valinit=len(lista_densidadPortadores),valstep=1, color ="blue")
+    #     global n
+    #     global s
+    #     def update_graph1(val,slider):
+    #         global n
+    #         global s
+    #         # Obtener el valor actual del deslizador
+    #         n = int(val)
+    #         # Obtener los subconjuntos de datos a mostrar
+    #         lista_densidadPortadores_variable = lista_densidadPortadores[s:n]
+    #         lista_densidarPortadores_filtrada_variable = lista_densidarPortadores_filtrada[s:n]
+    #         lista_tiempo_recombinacion_micros_variable = lista_tiempo_recombinacion[s:n]
+    #         lista_tiempo_intrinseco_micros_variable = lista_tiempo_intrinseco[s:n]
+    #         lista_tiempo_srh_micros_variable = lista_tiempo_srh[s:n]
+    #         # Se define la curva suavizada llamando a función
+    #         lista_tiempo_srh_suave, lista_densidarPortadores_filtrada_suave = functions_curvefit.suavizado_curva(lista_tiempo_srh_micros_variable, lista_densidarPortadores_filtrada_variable)
+    #         #indice = functions_curvefit.ajuste_minimo_curva(lista_tiempo_srh_micros_variable,lista_tiempo_srh_suave)
+    #         # Mediante ajuste de curvas calculamos los valores que mejor se ajustan y se almacenan en un 
+    #         # archivo los valores finales
+    #         SRH, J0E, lista_srh_ajustada = functions_curvefit.custom_gradient(lista_densidadPortadores_variable,lista_tiempo_srh_micros_variable)
+    #         with open("Valores_SRH_J0E.csv", "w") as archivo:
+    #             archivo.write(f"Valor SRH, Valor J0E\n")  # Escribir encabezados si es necesario
+    #             archivo.write(f"{SRH}, {J0E}\n")  # Escribir los valores
+    #         # Almacenar los datos en un dataframe
+    #         data = pd.DataFrame({"Carrier Density (cm^-3) Intrinseco":lista_densidarPortadores_filtrada_variable, "Lifetime (us) Intrinseco":lista_tiempo_intrinseco_micros_variable,"Carrier Density (cm^-3) Ajustada":lista_densidarPortadores_filtrada_suave, "Lifetime (us) Ajustada": lista_srh_ajustada, "Carrier Density (cm^-3) Suave":lista_densidarPortadores_filtrada_suave, "Lifetime (us) Suave": lista_tiempo_srh_suave  })
+    #         # Guardar los datos en un archivo Excel
+    #         data.to_excel(f"Lifetime_Intrinseco.xlsx", index=False)
+    #         #Limpiar la figura y graficar los datos actualizados
+    #         ax.clear()
+    #         ax.loglog(lista_densidarPortadores_filtrada_variable,J0E, color ="green")
+    #         #ax.loglog(lista_densidarPortadores_filtrada_variable, lista_srh_ajustada1, marker ="8", markersize = 6, label ="curve-fit", color ="yellow")
+    #         #ax.semilogx(lista_densidadPortadores_variable, lista_srh_ajustada, marker ="8", markersize = 9, label ="curve-fit", color ="purple")
+    #         #ax.semilogx(lista_densidarPortadores_filtrada_suave,lista_tiempo_srh_suave, marker = "8", markersize = 6, label = "curva-suave", color ="black")
+    #         #ax.loglog(lista_densidadPortadores_variable, lista_tiempo_recombinacion_micros_variable, marker ='*', markersize=6, label="Lifetime", color ="green")
+    #         #ax.loglog(lista_densidarPortadores_filtrada_variable, lista_tiempo_intrinseco_micros_variable, marker ='_', markersize=6, label="Intrinsic Lifetime", color ="blue")
+    #         #ax.semilogx(lista_densidarPortadores_filtrada_variable, lista_tiempo_srh_micros_variable, marker ='s', markersize=4, label="SRH Lifetime", color ="red")
+    #         ax.set_title(f"Lifetime & Intrinsic Lifetime -{choice} Mode") 
+    #         ax.set_xlabel("Carrier Density (cm^-3)")
+    #         ax.set_ylabel("J0 Acm^-2")
+    #         ax.grid(which='both', axis='both', linestyle=':', linewidth=0.5)
+    #         ax.legend()
+    #         plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
+    #         fig.canvas.draw_idle()
+    #         plt.pause(0.1)
         
-        s = 0
-        def update_graph2(val,slider):
-            global n
-            global s
-            # Obtener el valor actual del deslizador
-            s = int(val)
-            # Obtener los subconjuntos de datos a mostrar
-            lista_densidadPortadores_variable = lista_densidadPortadores[s:n]
-            lista_densidarPortadores_filtrada_variable = lista_densidarPortadores_filtrada[s:n]
-            lista_tiempo_recombinacion_micros_variable = lista_tiempo_recombinacion[s:n]
-            lista_tiempo_intrinseco_micros_variable = lista_tiempo_intrinseco[s:n]
-            lista_tiempo_srh_micros_variable = lista_tiempo_srh[s:n]
-            # Se define la curva suavizada llamando a función
-            lista_tiempo_srh_suave, lista_densidarPortadores_filtrada_suave = functions_curvefit.suavizado_curva(lista_tiempo_srh_micros_variable, lista_densidarPortadores_filtrada_variable)
-            #indice = functions_curvefit.ajuste_minimo_curva(lista_tiempo_srh_micros_variable,lista_tiempo_srh_suave)
-            # Mediante ajuste de curvas calculamos los valores que mejor se ajustan y se almacenan en un 
-            # archivo los valores finales
-            SRH, J0E, lista_srh_ajustada = functions_curvefit.custom_gradient(lista_densidadPortadores_variable,lista_tiempo_srh_micros_variable)
-            with open("Valores_SRH_J0E.csv", "w") as archivo:
-                archivo.write(f"Valor SRH, Valor J0E\n")  # Escribir encabezados si es necesario
-                archivo.write(f"{SRH}, {J0E}\n")  # Escribir los valores
-            # # Almacenar los datos en un dataframe
-            data = pd.DataFrame({"Carrier Density (cm^-3) Intrinseco":lista_densidarPortadores_filtrada_variable, "Lifetime (us) Intrinseco":lista_tiempo_intrinseco_micros_variable,"Carrier Density (cm^-3) Ajustada":lista_densidarPortadores_filtrada_suave, "Lifetime (us) Ajustada": lista_srh_ajustada, "Carrier Density (cm^-3) Suave":lista_densidarPortadores_filtrada_suave, "Lifetime (us) Suave": lista_tiempo_srh_suave  })
-            # Guardar los datos en un archivo Excel
-            data.to_excel(f"Lifetime_Intrinseco.xlsx", index=False)
-            #Limpiar la figura y graficar los datos actualizados
-            ax.clear()
-            ax.loglog(lista_densidarPortadores_filtrada_variable,J0E, color ="green")
-            #ax.loglog(lista_densidarPortadores_filtrada_variable, lista_srh_ajustada1, marker ="8", markersize = 6, label ="curve-fit", color ="yellow")
-            #ax.semilogx(lista_densidadPortadores_variable, lista_srh_ajustada, marker ="8", markersize = 9, label ="curve-fit", color ="purple")
-            #ax.semilogx(lista_densidarPortadores_filtrada_suave,lista_tiempo_srh_suave, marker = "8", markersize = 6, label = "curva-suave", color ="black")
-            #ax.loglog(lista_densidadPortadores_variable, lista_tiempo_recombinacion_micros_variable, marker ='*', markersize=6, label="Lifetime", color ="green")
-            #ax.loglog(lista_densidarPortadores_filtrada_variable, lista_tiempo_intrinseco_micros_variable, marker ='_', markersize=6, label="Intrinsic Lifetime", color ="blue")
-            #ax.semilogx(lista_densidarPortadores_filtrada_variable, lista_tiempo_srh_micros_variable, marker ='s', markersize=4, label="SRH Lifetime", color ="red")
-            ax.set_title(f"Lifetime & Intrinsic Lifetime -{choice} Mode") 
-            ax.set_xlabel("Carrier Density (cm^-3)")
-            ax.set_ylabel("J0 Acm^-2")
-            ax.grid(which='both', axis='both', linestyle=':', linewidth=0.5)
-            ax.legend()
-            plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
-            fig.canvas.draw_idle()
-            plt.pause(0.1)
-        # Conectar el slider a la función de actualización del gráfico
-        slider1.on_changed(lambda val: update_graph1(val,slider1))
-        # Conectar el slider a la función de actualización del gráfico
-        slider2.on_changed(lambda val: update_graph2(val,slider1))
-        # Graficar los datos iniciales
-        update_graph1(len(lista_densidadPortadores),slider1)
-        # Se muestra la gráfica
-        plt.ion()
-        plt.show(block=False)
-    
+    #     s = 0
+    #     def update_graph2(val,slider):
+    #         global n
+    #         global s
+    #         # Obtener el valor actual del deslizador
+    #         s = int(val)
+    #         # Obtener los subconjuntos de datos a mostrar
+    #         lista_densidadPortadores_variable = lista_densidadPortadores[s:n]
+    #         lista_densidarPortadores_filtrada_variable = lista_densidarPortadores_filtrada[s:n]
+    #         lista_tiempo_recombinacion_micros_variable = lista_tiempo_recombinacion[s:n]
+    #         lista_tiempo_intrinseco_micros_variable = lista_tiempo_intrinseco[s:n]
+    #         lista_tiempo_srh_micros_variable = lista_tiempo_srh[s:n]
+    #         # Se define la curva suavizada llamando a función
+    #         lista_tiempo_srh_suave, lista_densidarPortadores_filtrada_suave = functions_curvefit.suavizado_curva(lista_tiempo_srh_micros_variable, lista_densidarPortadores_filtrada_variable)
+    #         #indice = functions_curvefit.ajuste_minimo_curva(lista_tiempo_srh_micros_variable,lista_tiempo_srh_suave)
+    #         # Mediante ajuste de curvas calculamos los valores que mejor se ajustan y se almacenan en un 
+    #         # archivo los valores finales
+    #         SRH, J0E, lista_srh_ajustada = functions_curvefit.custom_gradient(lista_densidadPortadores_variable,lista_tiempo_srh_micros_variable)
+    #         with open("Valores_SRH_J0E.csv", "w") as archivo:
+    #             archivo.write(f"Valor SRH, Valor J0E\n")  # Escribir encabezados si es necesario
+    #             archivo.write(f"{SRH}, {J0E}\n")  # Escribir los valores
+    #         # # Almacenar los datos en un dataframe
+    #         data = pd.DataFrame({"Carrier Density (cm^-3) Intrinseco":lista_densidarPortadores_filtrada_variable, "Lifetime (us) Intrinseco":lista_tiempo_intrinseco_micros_variable,"Carrier Density (cm^-3) Ajustada":lista_densidarPortadores_filtrada_suave, "Lifetime (us) Ajustada": lista_srh_ajustada, "Carrier Density (cm^-3) Suave":lista_densidarPortadores_filtrada_suave, "Lifetime (us) Suave": lista_tiempo_srh_suave  })
+    #         # Guardar los datos en un archivo Excel
+    #         data.to_excel(f"Lifetime_Intrinseco.xlsx", index=False)
+    #         #Limpiar la figura y graficar los datos actualizados
+    #         ax.clear()
+    #         ax.loglog(lista_densidarPortadores_filtrada_variable,J0E, color ="green")
+    #         #ax.loglog(lista_densidarPortadores_filtrada_variable, lista_srh_ajustada1, marker ="8", markersize = 6, label ="curve-fit", color ="yellow")
+    #         #ax.semilogx(lista_densidadPortadores_variable, lista_srh_ajustada, marker ="8", markersize = 9, label ="curve-fit", color ="purple")
+    #         #ax.semilogx(lista_densidarPortadores_filtrada_suave,lista_tiempo_srh_suave, marker = "8", markersize = 6, label = "curva-suave", color ="black")
+    #         #ax.loglog(lista_densidadPortadores_variable, lista_tiempo_recombinacion_micros_variable, marker ='*', markersize=6, label="Lifetime", color ="green")
+    #         #ax.loglog(lista_densidarPortadores_filtrada_variable, lista_tiempo_intrinseco_micros_variable, marker ='_', markersize=6, label="Intrinsic Lifetime", color ="blue")
+    #         #ax.semilogx(lista_densidarPortadores_filtrada_variable, lista_tiempo_srh_micros_variable, marker ='s', markersize=4, label="SRH Lifetime", color ="red")
+    #         ax.set_title(f"Lifetime & Intrinsic Lifetime -{choice} Mode") 
+    #         ax.set_xlabel("Carrier Density (cm^-3)")
+    #         ax.set_ylabel("J0 Acm^-2")
+    #         ax.grid(which='both', axis='both', linestyle=':', linewidth=0.5)
+    #         ax.legend()
+    #         plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
+    #         fig.canvas.draw_idle()
+    #         plt.pause(0.1)
+    #     # Conectar el slider a la función de actualización del gráfico
+    #     slider1.on_changed(lambda val: update_graph1(val,slider1))
+    #     # Conectar el slider a la función de actualización del gráfico
+    #     slider2.on_changed(lambda val: update_graph2(val,slider1))
+    #     # Graficar los datos iniciales
+    #     update_graph1(len(lista_densidadPortadores),slider1)
+    #     # Se muestra la gráfica
+    #     plt.ion()
+    #     plt.show(block=False)
 
     ######################################################################################
     ######################################################################################
@@ -351,12 +353,16 @@ class LifetimeGraphic:
                 "NI" : NI
             })
 
+            #Pasamos los datos a un excel con una anchura de columnas dada
             excel_formatter.format_and_save_to_excel(data, "Lifetime_SRH.xlsx", column_widths=[25, 33, 20, 20, 15])
-                        
+            
+
+            
             #Limpiar la figura y graficar los datos actualizados
             ax.clear()
             #Muestra valores SRH frente a la densidad de portadores
-            ax.loglog(lista_densidarPortadores_filtrada_variable,lista_srh_independiente_micros, marker ="8", markersize = 6, color ="green")
+            ax.loglog(lista_densidarPortadores_filtrada_variable,lista_srh_independiente_micros, marker ="8", markersize = 6, color ="blue")
+
             ax.set_title(f"Lifetime & SRH Lifetime -{choice} Mode") 
             ax.set_xlabel("Carrier Density (cm^-3)")
             ax.set_ylabel("Lifetime SRH (us)")
@@ -393,6 +399,124 @@ class LifetimeGraphic:
 
     ######################################################################################
     ######################################################################################
+
+
+    def pintar_tiempo_intrinseco(self, choice, temperatura):
+        lista_densidadPortadores = self.densidad_portadoresList(choice, temperatura)
+        lista_densidadPortadores_filtrada = [num for num in lista_densidadPortadores if num >=0]
+        lista_tiempo_srh = self.tiempo_srhList(choice, temperatura)
+
+        fig = plt.figure(figsize=(12, 8))
+        ax = fig.add_subplot()
+        plt.subplots_adjust(right=0.83, bottom=0.15)
+        
+        def update_graph(val):
+            # Obtener los valores de los límites superior e inferior del slider
+            lower_limit, upper_limit = slider.val
+
+            global n
+            global s
+            global suav
+
+            #Obtener estado suavizado
+            suav = check.get_status()[0]
+            # Obtener el valor actual del deslizador
+            s = lower_limit
+            n = upper_limit
+            # Obtener los subconjuntos de datos a mostrar
+            lista_densidadPortadores_filtrada_variable = lista_densidadPortadores_filtrada[s:n]
+            lista_tiempo_srh_filtrada_variable = lista_tiempo_srh[s:n]
+            #Suavizamos la curva de tiempo intrinseco
+            lista_tiempo_srh_suave, lista_densidarPortadores_filtrada_suave = functions_curvefit.suavizado_curva(lista_tiempo_srh_filtrada_variable, lista_densidadPortadores_filtrada_variable)
+            
+            # Mediante ajuste de curvas calculamos los J0e
+            global J0e_fin            
+            SRH, J0E, lista_srh_ajustada = functions_curvefit.custom_gradient(lista_densidadPortadores_filtrada_variable,lista_tiempo_srh_filtrada_variable)
+            #Calculamos J0e con los datos suavizados
+            SRH, J0E_s, lista_srh_ajustada = functions_curvefit.custom_gradient(lista_densidarPortadores_filtrada_suave,lista_tiempo_srh_suave)
+            
+            #Almacenar los datos en un dataframe           
+            data = pd.DataFrame({
+                "Carrier Density (cm^-3)": lista_densidadPortadores_filtrada_variable,
+                "1/tiempo eff - 1/tiempo intrinseco": lista_tiempo_srh_filtrada_variable,
+                "J0E": J0E,
+                "J0E_suave": J0E_s,
+                "J0e medio": np.mean(J0E),
+                "J0e medio suave": np.mean(J0E_s)
+            })
+            #Pasamos los datos a un excel con una anchura de columnas dada
+            excel_formatter.format_and_save_to_excel(data, "J0es.xlsx", column_widths=[25, 33, 15, 25, 25, 30])
+
+            #Limpiar la figura y graficar los datos actualizados
+            ax.clear()
+            #Muestra valores 1/tiempo eff - 1/tiempo intrinseco frente a la densidad de portadores
+            if(not suav):   #Si la opcion de suavizado no esta seleccionada se muestran los valores normales
+                ax.loglog(lista_densidadPortadores_filtrada_variable,lista_tiempo_srh_filtrada_variable, marker ="8", markersize = 6, color ="green")
+                J0e_fin = J0E
+            else:       #Si la opcion de suavizado si esta seleccionada se muestran los valores suavizados
+                ax.loglog(lista_densidarPortadores_filtrada_suave,lista_tiempo_srh_suave, marker ="8", markersize = 6, color ="red")
+                J0e_fin = J0E_s
+
+            J0E_suavizado, lista_densidarPortadores_filtrada_suave = functions_curvefit.suavizado_curva(J0e_fin, lista_densidadPortadores_filtrada_variable)
+            J0E_suavizado_2, lista_densidarPortadores_filtrada_suave = functions_curvefit.suavizado_curva(J0E_suavizado, lista_densidadPortadores_filtrada_variable)
+
+            #Se muestra el valor de J0e a la derecha de la gráfica
+            value_ax = fig.add_axes([0.85, 0.6, 0.12, 0.05])
+            value_ax.set_xticks([])  # Ocultar ticks del eje X
+            value_ax.set_yticks([])  # Ocultar ticks del eje Y
+            value_ax.text(0.5, 0.5, f'J0e: { np.mean(J0E_suavizado_2):.4e}', horizontalalignment='center', verticalalignment='center', transform=value_ax.transAxes)
+
+            button_ax = plt.axes([0.85, 0.4, 0.12, 0.05])  # Ajusta las dimensiones según tus necesidades
+            button = Button(button_ax, 'SRH Lifetime', color='lightblue', hovercolor='0.975')
+
+            def clickado():
+                if(J0E_suavizado_2 > 0):
+                    self.pintar_tiempo_SRH(self,choice,temperatura,J0E_suavizado_2)
+                else:
+                    QMessageBox.critical(self, 'Error', 'J0e no puede ser negativo revisa si estas en alta inyección"')
+
+            button.on_clicked(clickado)
+
+
+            ax.set_title(f"Lifetime & -{choice} Mode")
+            ax.set_xlabel("Carrier Density (cm^-3)")
+            ax.set_ylabel("1/tiempo eff - 1/tiempo intrinseco ")
+            ax.grid(which='both', axis='both', linestyle=':', linewidth=0.5)
+            ax.legend()
+            plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
+            fig.canvas.draw_idle()
+            plt.pause(0.1)
+
+        # Posición del checkbox
+        check_ax = fig.add_axes([0.85, 0.8, 0.12, 0.05])  # [left, bottom, width, height]
+        check = CheckButtons(check_ax, ['Suavizar Datos'], [False])
+        #Cuando se pulsa el boton se actualiza la grafica a suavizada
+        check.on_clicked(update_graph)
+
+
+        # Definir el rango de valores del slider
+        val_min = 1
+        val_max = len(lista_densidadPortadores)
+        # Crear el slider con los límites inicial y final
+        slider_ax = plt.axes([0.1, 0.05, 0.8, 0.03])
+        slider = RangeSlider(slider_ax, '', val_min, val_max, valstep=1 , valinit=(val_min, val_max))
+        # Rotar visualmente el slider
+        slider_ax.invert_xaxis()
+        # Ocultar el eje y por completo
+        slider_ax.axis('off')
+        # Conectar el slider a la función de actualización del gráfico
+        slider.on_changed(update_graph)
+
+        # Graficar los datos iniciales
+        update_graph((1,len(lista_densidadPortadores)))
+
+        # Se muestra la gráfica
+        plt.ion()
+        plt.show(block=False)
+
+    ######################################################################################
+    ######################################################################################
+
 
     def pintar_SRH_X(self, choice, temperatura):
         lista_tiempo_srh = self.tiempo_srhList(choice, temperatura)
