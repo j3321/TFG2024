@@ -87,6 +87,19 @@ def custom_linear_fit(lista_densidad_portadores, lista_tiempo_srh):
     
     return SRH, J0E, valores_ajustados
 
+
+def dual_linear_fit(X, Y):
+    # Dividir los datos en dos segmentos
+    X1, Y1 = X[:len(X)//2], Y[:len(X)//2]
+    X2, Y2 = X[len(X)//2:], Y[len(X)//2:]
+
+    # Usar custom_curve_fit para ajustar los segmentos
+    SRH1, J0E1, valores_ajustados1 = custom_curve_fit(X1, Y1)
+    SRH2, J0E2, valores_ajustados2 = custom_curve_fit(X2, Y2)
+
+    return valores_ajustados1, valores_ajustados2, X1, X2
+    
+    
 def custom_gradient(lista_densidad_portadores, lista_tiempo_srh):
      # Se calcula el valor independiente conocido
     NI = (math.sqrt(NC*NV)) * ((math.e)**((-EG)/(2*K*temperatura)))
@@ -150,7 +163,6 @@ def get_SRH_con_J0e(lista_densidad_portadores, lista_tiempo_srh, J0e):
     lista_tiempo_srh_np = np.array(lista_tiempo_srh)
 
     # Se calcula el término independiente
-    #SRH_denom = lista_tiempo_srh_np -  ((2 * (10 ** (-(J0e)))) * lista_valor_independiente_np)
     SRH_denom = lista_tiempo_srh_np -  ((2 * J0e) * lista_valor_independiente_np)
 
     SRH = 1 / SRH_denom

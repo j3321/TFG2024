@@ -179,6 +179,7 @@ def tiempo_srh(tiempo_intrinseco, tiempo_recombinacion):
         lista_diferencia_tiempo.append(indice)
     return lista_diferencia_tiempo
     
+    
 def calculo_X(densidad_portadores, temperatura):
     # Se definen las variables que se van a usar
     lista_valores_X = []
