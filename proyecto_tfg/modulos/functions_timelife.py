@@ -31,6 +31,9 @@ NV = 1e+19 #unidades [cm^-3]
 NA = 1e+19 #unidades [cm^-3] FALTA COMPROBAR!
 EG = 1.1242 #Energy Bandgap unidades [eV]
 K = 8.617333262145e-5 #cte Boltzmann unidades [eV/K]
+VE = 2e+5 #Velocidad térmica de los electrones en silicio [m/s]
+VH = 1.5e+5 #Velocidad térmica de los electrones en silicio [m/s]
+
 
 W = input_values.W
 OPTICAL_FACTOR = input_values.OPTICAL_FACTOR
@@ -192,3 +195,32 @@ def calculo_X(densidad_portadores, temperatura):
         valor_x =n/p
         lista_valores_X.append(valor_x)
     return lista_valores_X
+
+def calculo_linea_defecto(m, b, temperatura):
+    # Valores típicos para el silicio
+    Ev = 0.0  # eV
+    Ec = EG  # 1.1242 eV
+
+    # Crear un arreglo de 1000 puntos para Et entre Ev y Ec
+    Et = np.linspace(0, EG, 1000)
+    lista_valores_k = []
+    for i in range(len(Et)):
+        # Se definen las variables que se van a usar
+
+        NI = (math.sqrt(NC*NV)) * ((math.e)**((-EG)/(2*K*temperatura)))
+        p0 = NDOP
+        n0 = math.pow(NI,2)/NDOP
+        n1 = NC * math.exp(-(Ec - Et[i]) / (K * temperatura))
+        p1 = NV * math.exp(-(Et[i] - Ev) / (K * temperatura))
+        numerator = (m / (m + b) + p1 / p0) * (VH / VE)
+        denominator = 1 - (n1 / p0) - (m / (m + b))
+
+        if denominator == 0:  # Evitar división por cero
+            valor_k = float('inf')
+        else:
+            valor_k = numerator / denominator
+
+        lista_valores_k.append(valor_k)
+
+
+    return lista_valores_k, Et

@@ -3,6 +3,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.ticker import ScalarFormatter
 from matplotlib.widgets import Slider
 from matplotlib.widgets import RangeSlider
 from matplotlib.widgets import CheckButtons
@@ -12,6 +13,18 @@ from PyQt5.QtWidgets import QMessageBox
 from .. import functions_timelife
 from .. import functions_curvefit
 from .. import excel_formatter
+import os
+
+# Configuración global de Matplotlib
+plt.rcParams.update({
+    'axes.titlesize': 20,       # Tamaño del título de los ejes
+    'axes.labelsize': 16,       # Tamaño de las etiquetas de los ejes
+    'xtick.labelsize': 14,      # Tamaño de las etiquetas de los ticks del eje X
+    'ytick.labelsize': 14,      # Tamaño de las etiquetas de los ticks del eje Y
+    'legend.fontsize': 14,      # Tamaño de la fuente de la leyenda
+    'font.size': 14             # Tamaño de la fuente general
+})
+
 
 class LifetimeGraphic:
     def __init__(self, path):
@@ -262,7 +275,7 @@ class LifetimeGraphic:
             ax.clear()
             #Muestra valores 1/tiempo eff - 1/tiempo intrinseco frente a la densidad de portadores
             if(not suav):   #Si la opcion de suavizado no esta seleccionada se muestran los valores normales
-                ax.loglog(lista_densidadPortadores_filtrada_variable,lista_tiempo_srh_filtrada_variable, marker ="o", markersize = 6, color ="blue", label="Original")
+                ax.plot(lista_densidadPortadores_filtrada_variable,lista_tiempo_srh_filtrada_variable, marker ="o", markersize = 6, color ="blue", linewidth=2, label="Original")
                 J0e_fin = J0E
             else:       #Si la opcion de suavizado si esta seleccionada se muestran los valores suavizados
                 #Muestra los valores NO suavizados
@@ -310,12 +323,16 @@ class LifetimeGraphic:
         #Se crea un botón para obtener el tiempo SRH
         button_ax = plt.axes([0.85, 0.4, 0.12, 0.05])  # Ajusta las dimensiones según tus necesidades
         button = Button(button_ax, 'SRH Lifetime', color='lightblue', hovercolor='0.975')
+        #button.label.set_fontsize(14)
         #button.on_clicked(clickado)
         
 
         # Posición del checkbox
         check_ax = fig.add_axes([0.85, 0.8, 0.12, 0.05])  # [left, bottom, width, height]
         check = CheckButtons(check_ax, ['Suavizar Datos'], [False])
+            # Ajustar el tamaño de la fuente del checkbox
+        #for label in check.labels:
+            #label.set_fontsize(14)
         #Cuando se pulsa el boton se actualiza la grafica a suavizada
         check.on_clicked(update_graph)
 
@@ -351,8 +368,8 @@ class LifetimeGraphic:
         lista_tiempo_srh = self.tiempo_srhList(choice, temperatura)
         #lista_tiempo_srh_micros = [t * 1e+6 for t in lista_tiempo_srh] 
 
-        #Se calcula la lista de srh para luego usarla en SRH/X
-        lista_srh_fin,lista_valor_independiente, NI = functions_curvefit.get_SRH_con_J0e(lista_densidadPortadores_filtrada,lista_tiempo_srh,j0e)
+        #Sacamos una lista con los valores de X
+        lista_X = self.x_List(choice,temperatura)
 
 
         fig = plt.figure(figsize=(12, 8))
@@ -371,6 +388,9 @@ class LifetimeGraphic:
             global suav
             nonlocal button_connected
 
+            #Se crea la lista de srh y de X para luego usarla en SRH/X
+            global lista_srh_fin
+            global lista_X_variable
             #Obtener estado suavizado
             suav = check.get_status()[0]
             # Obtener el valor actual del deslizador
@@ -380,13 +400,14 @@ class LifetimeGraphic:
             lista_densidadPortadores_filtrada_variable = lista_densidadPortadores_filtrada[s:n]
             lista_tiempo_intrinseco_micros_variable = lista_tiempo_intrinseco[s:n]
             lista_tiempo_srh_micros_variable = lista_tiempo_srh[s:n]
-
+            lista_X_variable = lista_X[s:n]
+            
             # Mediante ajuste de curvas calculamos los valores de SRH que mejor se ajustan con un valor de J0e introducido por el usuario
             lista_srh_independiente,lista_valor_independiente, NI = functions_curvefit.get_SRH_con_J0e(lista_densidadPortadores_filtrada_variable,lista_tiempo_srh_micros_variable,j0e)
             lista_srh_independiente_micros = [t * 1e+6 for t in lista_srh_independiente]
             #Suavizamos la curva de tiempo SRH
             lista_srh_independiente_micros_suave, lista_densidadPortadores_filtrada_suave = functions_curvefit.suavizado_curva(lista_srh_independiente_micros, lista_densidadPortadores_filtrada_variable)
-            
+            lista_srh_fin = lista_srh_independiente_micros
 
             #Almacenar los datos en un dataframe           
             data = pd.DataFrame({
@@ -409,10 +430,11 @@ class LifetimeGraphic:
                 ax.loglog(lista_densidadPortadores_filtrada_variable,lista_srh_independiente_micros, marker ="8", markersize = 6, color ="green")
     
             else:       #Si la opcion de suavizado si esta seleccionada se muestran los valores suavizados y los NO suavizados
-                #Muestra los valores NO suevizados
+                #Muestra los valores NO suavizados
                 ax.loglog(lista_densidadPortadores_filtrada_variable,lista_srh_independiente_micros, marker ="8", markersize = 6, color ="green")
                 #Muestra los valores suavizados
                 ax.loglog(lista_densidadPortadores_filtrada_suave,lista_srh_independiente_micros_suave, marker ="8", markersize = 6, color ="blue", label="Suavizado")
+            
 
 
             # Solo conectar el botón una vez
@@ -434,7 +456,7 @@ class LifetimeGraphic:
 
       
         def clickado(event):
-            self.pintar_SRH_X(choice,temperatura,lista_srh_fin)
+            self.pintar_SRH_X(choice,temperatura,lista_srh_fin, lista_X_variable)
 
 
         #Se crea un botón para obtener el tiempo SRH
@@ -474,14 +496,15 @@ class LifetimeGraphic:
     ######################################################################################
 
 
-    def pintar_SRH_X(self, choice, temperatura, lista_srh_independiente_micros):
-        #Sacamos una lista con los valores de X
-        lista_X = self.x_List(choice,temperatura)
+    def pintar_SRH_X(self, choice, temperatura, lista_srh_independiente_micros,lista_X ):
+
         lista_X_filtrada = [num for num in lista_X if num >=0]
 
         fig = plt.figure(figsize=(12, 8))
         ax = fig.add_subplot()
         plt.subplots_adjust(right=0.83, bottom=0.15)
+
+        button_connected = False  # Bandera para controlar la conexión del botón
 
         def update_graph(val):
             # Obtener los valores de los límites superior e inferior del slider
@@ -489,7 +512,13 @@ class LifetimeGraphic:
 
             global n
             global s
+            global m_rojo
+            global m_azul
+            global b_rojo
+            global b_azul           
+
             global suav
+            nonlocal button_connected
 
             #Obtener estado suavizado
             suav = check.get_status()[0]
@@ -502,9 +531,17 @@ class LifetimeGraphic:
 
             # Se define la curva suavizada llamando a función
             lista_srh_independiente_micros_variable_suave, lista_X_filtrada_variable_suave = functions_curvefit.suavizado_curva(lista_srh_independiente_micros_variable, lista_X_filtrada_variable)
-            
+            #Suavizamos de nuevo
+            lista_srh_independiente_micros_variable_suave_2, lista_X_filtrada_variable_suave_2 = functions_curvefit.suavizado_curva(lista_srh_independiente_micros_variable_suave, lista_X_filtrada_variable_suave)
+            #Suavizamos de nuevo
+            lista_srh_independiente_micros_variable_suave_3, lista_X_filtrada_variable_suave_3 = functions_curvefit.suavizado_curva(lista_srh_independiente_micros_variable_suave_2, lista_X_filtrada_variable_suave_2)
+
             #Hacemos las dos Regresiones lineales
-            valores_ajustados1, valores_ajustados2, X1, X2 = functions_curvefit.dual_linear_fit(lista_X_filtrada_variable_suave, lista_srh_independiente_micros_variable_suave)
+            Y_fit1, Y_fit2, Y_fit, X1, X2, m1, m2, b1, b2 = functions_curvefit.dual_linear_fit(lista_X_filtrada_variable_suave_3, lista_srh_independiente_micros_variable_suave_3)
+            m_rojo = m1
+            m_azul = m2
+            b_rojo = b1
+            b_azul = b2
 
             #Almacenar los datos en un dataframe           
             data2 = pd.DataFrame({
@@ -519,17 +556,20 @@ class LifetimeGraphic:
 
             #Muestra valores SRH frente a la densidad de portadores
             if(not suav):   #Si la opcion de suavizado no esta seleccionada se muestran los valores normales
-                ax.semilogy(lista_X_filtrada_variable, lista_srh_independiente_micros_variable, marker = "8", markersize = 6, color ="blue")    
+                ax.semilogy(lista_X_filtrada_variable, lista_srh_independiente_micros_variable, marker = "o", markersize = 6, color ="green")    
             else:       #Si la opcion de suavizado si esta seleccionada se muestran los valores suavizados y los NO suavizados
                 #Muestra los valores NO suavizados
                 #ax.semilogy(lista_X_filtrada_variable, lista_srh_independiente_micros_variable, marker = "8", markersize = 6, color ="blue")
                 #Muestra los valores suavizados
-                ax.semilogy(lista_X_filtrada_variable_suave, lista_srh_independiente_micros_variable_suave, marker = "8", markersize = 6, color ="green")
-                ax.plot(X1, valores_ajustados1, color='red', linestyle='--', label='Ajuste segmento 1')
-                ax.plot(X2, valores_ajustados2, color='blue', linestyle='-.', label='Ajuste segmento 2')
+                ax.plot(lista_X_filtrada_variable_suave_3, lista_srh_independiente_micros_variable_suave_3, marker = "o", markersize = 6, color ="black")
+                ax.plot(X1, Y_fit1, color='red', linestyle='--', label='Ajuste segmento 1')
+                ax.plot(X2, Y_fit2, color='blue', linestyle='--', label='Ajuste segmento 2')
+                ax.plot(lista_X_filtrada_variable_suave_3, Y_fit, color='green', linestyle='--', label='Ajuste segmento total')
 
-
-                
+            # Solo conectar el botón una vez
+            if not button_connected:
+                button.on_clicked(clickado)
+                button_connected = True
 
             ax.set_title(f"X(n/p) - SRH Lifetime -{choice} Mode") 
             ax.set_xlabel("X(n/p)")
@@ -540,6 +580,14 @@ class LifetimeGraphic:
             fig.canvas.draw_idle()
             plt.pause(0.1)
 
+
+        def clickado(event):
+            self.pintar_defectos(choice,temperatura,m_rojo, b_rojo)
+
+
+        #Se crea un botón para obtener el tiempo SRH
+        button_ax = plt.axes([0.85, 0.4, 0.12, 0.05])  # Ajusta las dimensiones según tus necesidades
+        button = Button(button_ax, 'Defectos', color='lightblue', hovercolor='0.975')
 
         # Posición del checkbox
         check_ax = fig.add_axes([0.85, 0.8, 0.12, 0.05])  # [left, bottom, width, height]
@@ -570,7 +618,52 @@ class LifetimeGraphic:
 
     ######################################################################################
     ######################################################################################
-        
+
+    def pintar_defectos(self, choice, temperatura, m, b):
+        lista_valores_k, Et = functions_timelife.calculo_linea_defecto(m, b, temperatura)
+
+        # Cargar el Excel con los valores de los defectos
+        file_path = os.path.join(os.getcwd(), 'data_defects_Etk.xlsx')
+        df = pd.read_excel(file_path)
+
+        # Extraer los datos relevantes
+        x = df['Et-Ev (eV)']
+        y = df['k']
+        labels = df['Element']
+
+        fig = plt.figure(figsize=(12, 8))
+        ax = fig.add_subplot()
+        plt.subplots_adjust(right=0.83, bottom=0.15)
+        ax.clear()
+        ax.scatter(x, y)
+
+        # Añadir los nombres de los defectos a cada punto
+        for i, label in enumerate(labels):
+            ax.text(x[i], y[i], label, fontsize=12)
+
+        ax.semilogy(Et, lista_valores_k, marker ='o', markersize=3, color ='red')
+        ax.set_title(f"Defectos -{choice} Mode")
+        ax.set_xlabel("Et - Ev (eV)")
+        ax.set_ylabel("kDPSS")
+        # Configurar los ticks del eje Y manualmente
+        yticks = [0.01, 0.1, 1, 10, 100, 1000, 10000]
+        ax.set_yticks(yticks)
+        ax.set_yticklabels([f'{tick:.2f}' if tick < 0.1 else f'{tick:.1f}' if tick < 1 else f'{int(tick)}' for tick in yticks])
+
+        # Configurar los límites de los ejes
+        ax.set_xlim(0, 1.1242)
+        #ax.set_ylim(0.1, 200)
+        ax.grid(which='both', axis='both', linestyle=':', linewidth=0.5)
+        fig.canvas.draw_idle()
+        plt.pause(0.0001)
+
+        # Se muestra la gráfica
+        plt.ion()
+        plt.show(block=False)
+
+
+    ######################################################################################
+    ######################################################################################
         
     def pintar_todas_movilidades(self, choice, temperatura):
         lista_densidadPortadoresSinton = self.densidad_portadoresSintonList(choice, temperatura)

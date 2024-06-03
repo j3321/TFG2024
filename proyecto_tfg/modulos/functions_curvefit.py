@@ -93,11 +93,30 @@ def dual_linear_fit(X, Y):
     X1, Y1 = X[:len(X)//2], Y[:len(X)//2]
     X2, Y2 = X[len(X)//2:], Y[len(X)//2:]
 
-    # Usar custom_curve_fit para ajustar los segmentos
-    SRH1, J0E1, valores_ajustados1 = custom_curve_fit(X1, Y1)
-    SRH2, J0E2, valores_ajustados2 = custom_curve_fit(X2, Y2)
+    # Función lineal
+    def linear_func(x, m, b):
+        return m * x + b
 
-    return valores_ajustados1, valores_ajustados2, X1, X2
+    # Ajustar la primera recta
+    popt1, _ = curve_fit(linear_func, X1, Y1)
+    m1, b1 = popt1
+
+    # Ajustar la segunda recta
+    popt2, _ = curve_fit(linear_func, X2, Y2)
+    m2, b2 = popt2
+
+    # Función de ajuste combinado
+    def combined_fit(X, m1, b1, m2, b2):
+        return 1 / (1 / (m1 * X + b1) + 1 / (m2 * X + b2))
+
+    # Calcular el ajuste combinado
+    Y_fit = combined_fit(X, m1, b1, m2, b2)
+
+    # Calcular los ajustes individuales
+    Y_fit1 = linear_func(X1, m1, b1)
+    Y_fit2 = linear_func(X2, m2, b2)
+
+    return Y_fit1, Y_fit2, Y_fit, X1, X2, m1, m2, b1, b2
     
     
 def custom_gradient(lista_densidad_portadores, lista_tiempo_srh):
