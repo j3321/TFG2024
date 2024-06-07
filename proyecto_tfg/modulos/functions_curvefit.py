@@ -6,6 +6,7 @@ from scipy.optimize import curve_fit
 import math
 from sklearn.linear_model import LinearRegression
 from . import input_values
+from sklearn.metrics import r2_score
 
 
 # Definición de constantes
@@ -42,7 +43,7 @@ def ajuste_minimo_curva(lista_tiempo_srh, lista_tiempo_srh_suave):
 # Se tiene una función lineal del tipo A = B + CX, de los cuales se conocen A y C
 # Mediante el ajuste de curvas de una función lineal, se pretende ajustar las incógnitas
 # B y la pendiente X
-def custom_curve_fit(lista_densidad_portadores, lista_tiempo_srh):
+def custom_curve_fit(lista_densidad_portadores, lista_tiempo_srh): #(X,Y)
     def linear_func(x, m, c):
         return [c + m*xi for xi in x]
     # Se calcula el valor independiente conocido
@@ -60,7 +61,7 @@ def custom_curve_fit(lista_densidad_portadores, lista_tiempo_srh):
     SRH = popt[0]
     J0E = popt[1]
     valores_ajustados = linear_func(lista_valor_independiente, SRH, J0E)
-    return SRH, J0E, valores_ajustados
+    return SRH, J0E, valores_ajustados 
 
 def custom_linear_fit(lista_densidad_portadores, lista_tiempo_srh):
     # Se calcula el valor independiente conocido
@@ -88,35 +89,44 @@ def custom_linear_fit(lista_densidad_portadores, lista_tiempo_srh):
     return SRH, J0E, valores_ajustados
 
 
-def dual_linear_fit(X, Y):
-    # Dividir los datos en dos segmentos
-    X1, Y1 = X[:len(X)//2], Y[:len(X)//2]
-    X2, Y2 = X[len(X)//2:], Y[len(X)//2:]
-
-    # Función lineal
+def one_linear_fit(X,Y):
     def linear_func(x, m, b):
         return m * x + b
+    # Ajustar los parámetros usando curve_fit 
+    popt, pcov = curve_fit(linear_func, X, Y)
+    m_1recta, b_1recta = popt
+    fit_values_1recta = linear_func(X, m_1recta, b_1recta)
 
-    # Ajustar la primera recta
-    popt1, _ = curve_fit(linear_func, X1, Y1)
-    m1, b1 = popt1
+    # Calcular el coeficiente de determinación R^2
+    r2 = r2_score(Y, fit_values_1recta)
 
-    # Ajustar la segunda recta
-    popt2, _ = curve_fit(linear_func, X2, Y2)
-    m2, b2 = popt2
+    return fit_values_1recta, r2, m_1recta, b_1recta
 
-    # Función de ajuste combinado
-    def combined_fit(X, m1, b1, m2, b2):
-        return 1 / (1 / (m1 * X + b1) + 1 / (m2 * X + b2))
+def dual_linear_fit(X, Y):
+# Definir la función Fit
+    def fit_function(X, m1, b1, m2, b2):
+        term1 = 1 / (m1 * X + b1)
+        term2 = 1 / (m2 * X + b2)
+        fit = 1 / (term1 + term2)
+        return fit
+    def linear_func(x, m, b):
+        return m * x + b
+    
+    # Ajustar los parámetros usando curve_fit 
+    popt, pcov = curve_fit(fit_function, X, Y)
 
-    # Calcular el ajuste combinado
-    Y_fit = combined_fit(X, m1, b1, m2, b2)
+    # Obtener los valores ajustados de los parámetros
+    m1, b1, m2, b2 = popt
+    # Calcular los valores ajustados de Fit
+    fit_values = fit_function(X, m1, b1, m2, b2)
+    #Calculamos los valores de cada fit
+    fit_values_1 = linear_func(X, m1, b1)
+    fit_values_2 = linear_func(X, m2, b2)
 
-    # Calcular los ajustes individuales
-    Y_fit1 = linear_func(X1, m1, b1)
-    Y_fit2 = linear_func(X2, m2, b2)
-
-    return Y_fit1, Y_fit2, Y_fit, X1, X2, m1, m2, b1, b2
+    # Calcular el coeficiente de determinación R^2
+    r2 = r2_score(Y, fit_values)
+  
+    return fit_values_1, fit_values_2, fit_values, r2, m1, m2, b1, b2
     
     
 def custom_gradient(lista_densidad_portadores, lista_tiempo_srh):

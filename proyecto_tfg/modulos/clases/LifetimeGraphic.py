@@ -15,6 +15,8 @@ from .. import functions_curvefit
 from .. import excel_formatter
 import os
 
+import plotly.graph_objects as go
+
 # Configuración global de Matplotlib
 plt.rcParams.update({
     'axes.titlesize': 20,       # Tamaño del título de los ejes
@@ -24,7 +26,7 @@ plt.rcParams.update({
     'legend.fontsize': 14,      # Tamaño de la fuente de la leyenda
     'font.size': 14             # Tamaño de la fuente general
 })
-
+tau = '\u03C4'
 
 class LifetimeGraphic:
     def __init__(self, path):
@@ -194,23 +196,24 @@ class LifetimeGraphic:
         fig = plt.figure(figsize=(10, 8))
         ax = fig.add_subplot()
         ax.grid(which='both', axis='both', linestyle=':', linewidth=0.5)
+        temperatura_kelvin  = temperatura + 273.15
         # se define una temperatura mínima de 300K y se pintan con un intervalo de 50K
         # las gráficas sucesivas
-        while temperatura >= 300:
-                lista_densidadPortadores = self.densidad_portadoresList(choice, temperatura)
-                lista_tiempo_recombinacion = self.tiempo_recombinacionList(choice, temperatura)
+        while temperatura_kelvin >= 300:
+                lista_densidadPortadores = self.densidad_portadoresList(choice, temperatura_kelvin)
+                lista_tiempo_recombinacion = self.tiempo_recombinacionList(choice, temperatura_kelvin)
                 lista_tiempo_recombinacion_micros = [t * 1e+6 for t in lista_tiempo_recombinacion]  # Conversión a microsegundos
                 data = pd.DataFrame({"Carrier Density (cm^-3)": lista_densidadPortadores[:n], "Lifetime (us)": lista_tiempo_recombinacion_micros[:n]})
                 # Guardar los datos en un archivo Excel
-                data.to_excel(f"Lifetime_{choice}_Mode_{temperatura}K.xlsx", index=False)
+                data.to_excel(f"Lifetime_{choice}_Mode_{temperatura_kelvin}K.xlsx", index=False)
                 ax.semilogx(lista_densidadPortadores[:n], lista_tiempo_recombinacion_micros[:n], marker ='o', markersize=3, label="Lifetime")
-                ax.text(lista_densidadPortadores[0], lista_tiempo_recombinacion_micros[0], f"{temperatura} K", fontsize=8)
+                ax.text(lista_densidadPortadores[0], lista_tiempo_recombinacion_micros[0], f"{temperatura_kelvin} K", fontsize=8)
                 ax.set_title(f"Lifetime vs. Carrier Density -{choice} Mode") 
                 ax.set_xlabel("Carrier Density (cm^-3)")
                 ax.set_ylabel("Lifetime (us)")
                 ax.set_ylim(0, None)
                 ax.yaxis.set_major_formatter('{:.1f}'.format)
-                temperatura-=50
+                temperatura_kelvin-=50
         plt.show(block=False)
 
 
@@ -262,14 +265,14 @@ class LifetimeGraphic:
             #Almacenar los datos en un dataframe           
             data = pd.DataFrame({
                 "Carrier Density (cm^-3)": lista_densidadPortadores_filtrada_variable,
-                "1/tiempo eff - 1/tiempo intrinseco": lista_tiempo_srh_filtrada_variable,
+                f"1/{tau} eff - 1/{tau} intrinseco": lista_tiempo_srh_filtrada_variable,
                 "J0E": J0E,
-                "J0E_suave": J0E_s,
                 "J0e medio": np.mean(J0E),
+                "J0E_suave": J0E_s,
                 "J0e medio suave": np.mean(J0E_s)
             })
             #Pasamos los datos a un excel con una anchura de columnas dada
-            excel_formatter.format_and_save_to_excel(data, "J0es.xlsx", column_widths=[25, 33, 15, 25, 25, 30])
+            excel_formatter.format_and_save_to_excel(data, "Lifetime.xlsx", "Lifetime Intrinseco", "TableStyleMedium2", column_widths=[25, 33, 15, 25, 25, 30])
 
             #Limpiar la figura y graficar los datos actualizados
             ax.clear()
@@ -306,7 +309,7 @@ class LifetimeGraphic:
 
             ax.set_title(f"Lifetime & -{choice} Mode")
             ax.set_xlabel("Carrier Density (cm^-3)")
-            ax.set_ylabel("1/tiempo eff - 1/tiempo intrinseco ")
+            ax.set_ylabel(f"1/{tau} eff - 1/{tau} intrinseco")
             ax.grid(which='both', axis='both', linestyle=':', linewidth=0.5)
             ax.legend()
             plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
@@ -412,14 +415,13 @@ class LifetimeGraphic:
             #Almacenar los datos en un dataframe           
             data = pd.DataFrame({
                 "Carrier Density (cm^-3)": lista_densidadPortadores_filtrada_variable,
-                "1/tiempo eff - 1/tiempo intrinseco": lista_tiempo_srh_micros_variable,
-                "valor independiente": lista_valor_independiente,
-                "lifetime SRH (us)": lista_srh_independiente_micros,
-                "NI" : NI
+                f"1/{tau} eff - 1/{tau} intrinseco": lista_tiempo_srh_micros_variable,
+                f"{tau} SRH (us)": lista_srh_independiente_micros
+
             })
 
             #Pasamos los datos a un excel con una anchura de columnas dada
-            excel_formatter.format_and_save_to_excel(data, "Lifetime_SRH.xlsx", column_widths=[25, 33, 20, 20, 15])
+            excel_formatter.format_and_save_to_excel(data, "Lifetime.xlsx", "Lifetime SRH", "TableStyleMedium3", column_widths=[25, 33, 20])
             
 
             
@@ -445,9 +447,9 @@ class LifetimeGraphic:
             ##Muestra valores SRH frente a la densidad de portadores
             #ax.loglog(lista_densidadPortadores_filtrada_variable,lista_srh_independiente_micros, marker ="8", markersize = 6, color ="blue")
 
-            ax.set_title(f"Lifetime & SRH Lifetime -{choice} Mode") 
+            ax.set_title(f"Lifetime & {tau} SRH") 
             ax.set_xlabel("Carrier Density (cm^-3)")
-            ax.set_ylabel("Lifetime SRH (us)")
+            ax.set_ylabel(f"{tau} SRH (us)")
             ax.grid(which='both', axis='both', linestyle=':', linewidth=0.5)
             ax.legend()
             plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
@@ -511,17 +513,17 @@ class LifetimeGraphic:
             lower_limit, upper_limit = slider.val
 
             global n
-            global s
-            global m_rojo
-            global m_azul
-            global b_rojo
-            global b_azul           
-
-            global suav
+            global s        
+            global valores_rectas
             nonlocal button_connected
+            R2 = 0
+
+            #Creamos un array para guardar los valores de las rectas:
+            valores_rectas = [None, None, None, None]
 
             #Obtener estado suavizado
-            suav = check.get_status()[0]
+            linea_1 = check.get_status()[0]
+            linea_2 = check_2.get_status()[0]
             # Obtener el valor actual del deslizador
             s = lower_limit
             n = upper_limit
@@ -536,35 +538,52 @@ class LifetimeGraphic:
             #Suavizamos de nuevo
             lista_srh_independiente_micros_variable_suave_3, lista_X_filtrada_variable_suave_3 = functions_curvefit.suavizado_curva(lista_srh_independiente_micros_variable_suave_2, lista_X_filtrada_variable_suave_2)
 
-            #Hacemos las dos Regresiones lineales
-            Y_fit1, Y_fit2, Y_fit, X1, X2, m1, m2, b1, b2 = functions_curvefit.dual_linear_fit(lista_X_filtrada_variable_suave_3, lista_srh_independiente_micros_variable_suave_3)
-            m_rojo = m1
-            m_azul = m2
-            b_rojo = b1
-            b_azul = b2
+            #Se saca los valores a una recta
+            fit_values_1recta, r2_1, m_1recta, b_1recta = functions_curvefit.one_linear_fit(lista_X_filtrada_variable_suave_3, lista_srh_independiente_micros_variable_suave_3)
+            #Se saca los valores a dos rectas
+            fit_values_1, fit_values_2, fit_values, r2_2, m1, m2, b1, b2 = functions_curvefit.dual_linear_fit(lista_X_filtrada_variable_suave_3, lista_srh_independiente_micros_variable_suave_3)
+
+            #Creamos un array para guardar los valores de las rectas:
+            valores_rectas = [None, None, None, None]
 
             #Almacenar los datos en un dataframe           
             data2 = pd.DataFrame({
-                "Lifetime (us)": lista_srh_independiente_micros_variable,
-                "X(n/p)": lista_X_filtrada_variable
+                "Lifetime (us)": lista_srh_independiente_micros_variable_suave_3,
+                "X(n/p)": lista_X_filtrada_variable_suave_3,
+                "m Verde" : m_1recta,
+                "b Verde" : b_1recta,
+                "m Rojo": m1,
+                "b Rojo": b1,
+                "m Azul": m2,
+                "b Azul": b2
             })
             #Pasamos los datos a un excel con una anchura de columnas dada
-            excel_formatter.format_and_save_to_excel(data2, "Lifetime_SRH_X.xlsx", column_widths=[30, 30])
+            excel_formatter.format_and_save_to_excel(data2, "Lifetime.xlsx", "Lifetime SRH_X", "TableStyleMedium4", column_widths=[30, 30, 20, 20,  20, 20, 20, 20])
 
             #Limpiar la figura y graficar los datos actualizados
             ax.clear()
 
             #Muestra valores SRH frente a la densidad de portadores
-            if(not suav):   #Si la opcion de suavizado no esta seleccionada se muestran los valores normales
-                ax.semilogy(lista_X_filtrada_variable, lista_srh_independiente_micros_variable, marker = "o", markersize = 6, color ="green")    
-            else:       #Si la opcion de suavizado si esta seleccionada se muestran los valores suavizados y los NO suavizados
-                #Muestra los valores NO suavizados
-                #ax.semilogy(lista_X_filtrada_variable, lista_srh_independiente_micros_variable, marker = "8", markersize = 6, color ="blue")
-                #Muestra los valores suavizados
-                ax.plot(lista_X_filtrada_variable_suave_3, lista_srh_independiente_micros_variable_suave_3, marker = "o", markersize = 6, color ="black")
-                ax.plot(X1, Y_fit1, color='red', linestyle='--', label='Ajuste segmento 1')
-                ax.plot(X2, Y_fit2, color='blue', linestyle='--', label='Ajuste segmento 2')
-                ax.plot(lista_X_filtrada_variable_suave_3, Y_fit, color='green', linestyle='--', label='Ajuste segmento total')
+            if(linea_1):   #Si la opcion de 1 linea no esta seleccionada se muestran los valores normales
+                ax.plot(lista_X_filtrada_variable_suave_3, lista_srh_independiente_micros_variable_suave_3, marker = "o", markersize = 6, color ="black", label='Datos')
+                ax.plot(lista_X_filtrada_variable_suave_3, fit_values_1recta, color='green', linestyle='--', label='Ajuste segmento total')
+                valores_rectas =[m_1recta, b_1recta, None, None]
+                R2 = r2_1
+            elif(linea_2):
+                ax.plot(lista_X_filtrada_variable_suave_3, lista_srh_independiente_micros_variable_suave_3, marker = "o", markersize = 6, color ="black", label='Datos')
+                ax.plot(lista_X_filtrada_variable_suave_3, fit_values_1, color='red', linestyle='--', label='Ajuste Defecto 1')
+                ax.plot(lista_X_filtrada_variable_suave_3, fit_values_2, color='blue', linestyle='--', label='Ajuste Defecto 2')
+                ax.plot(lista_X_filtrada_variable_suave_3, fit_values, color='magenta', linestyle='--', label='Ajuste combinado')
+                valores_rectas =[m1, b1, m2, b2]
+                R2 = r2_2
+            else:
+                ax.plot(lista_X_filtrada_variable_suave_3, lista_srh_independiente_micros_variable_suave_3, marker = "o", markersize = 6, color ="black", label='Datos')
+
+            #Se muestra el valor de R^2 a la derecha de la gráfica
+            value_ax = fig.add_axes([0.85, 0.4, 0.12, 0.05])
+            value_ax.set_xticks([])  # Ocultar ticks del eje X
+            value_ax.set_yticks([])  # Ocultar ticks del eje Y
+            value_ax.text(0.5, 0.5, f'$R^2$: { R2:.5f}', horizontalalignment='center', verticalalignment='center', transform=value_ax.transAxes)
 
             # Solo conectar el botón una vez
             if not button_connected:
@@ -582,18 +601,33 @@ class LifetimeGraphic:
 
 
         def clickado(event):
-            self.pintar_defectos(choice,temperatura,m_rojo, b_rojo)
+            #Pinta la grafica con los defectos
+            self.pintar_defectos(choice, temperatura, valores_rectas)
+            #Si esta seleccionado 1 linea se pinta una grafica de esa linea
+            if(check.get_status()[0]):
+                self.pintar_tau_n0(choice, temperatura, valores_rectas[0], valores_rectas[1], 'red')
+            #Si esta seleccionado 2 lineas se pintan dos graficas una con cada linea
+            elif(check_2.get_status()[0]):
+                self.pintar_tau_n0(choice, temperatura, valores_rectas[0], valores_rectas[1], 'red')
+                self.pintar_tau_n0(choice, temperatura, valores_rectas[2], valores_rectas[3], 'blue')
 
 
-        #Se crea un botón para obtener el tiempo SRH
-        button_ax = plt.axes([0.85, 0.4, 0.12, 0.05])  # Ajusta las dimensiones según tus necesidades
+
+        #Se crea un botón para obtener los defectos
+        button_ax = plt.axes([0.85, 0.2, 0.12, 0.05])  # Ajusta las dimensiones según tus necesidades
         button = Button(button_ax, 'Defectos', color='lightblue', hovercolor='0.975')
 
-        # Posición del checkbox
+        # Posición del checkbox de una linea
         check_ax = fig.add_axes([0.85, 0.8, 0.12, 0.05])  # [left, bottom, width, height]
-        check = CheckButtons(check_ax, ['Suavizar Datos'], [False])
+        check = CheckButtons(check_ax, ['1 Recta'], [False])
         #Cuando se pulsa el boton se actualiza la grafica a suavizada
         check.on_clicked(update_graph)
+
+        # Posición del checkbox de dos lineas
+        check_ax_2 = fig.add_axes([0.85, 0.6, 0.12, 0.05])  # [left, bottom, width, height]
+        check_2 = CheckButtons(check_ax_2, ['2 Rectas'], [False])
+        #Cuando se pulsa el boton se actualiza la grafica a suavizada
+        check_2.on_clicked(update_graph)
 
         # Definir el rango de valores del slider
         val_min = 1
@@ -619,51 +653,130 @@ class LifetimeGraphic:
     ######################################################################################
     ######################################################################################
 
-    def pintar_defectos(self, choice, temperatura, m, b):
-        lista_valores_k, Et = functions_timelife.calculo_linea_defecto(m, b, temperatura)
+    #Posible mejora con zoom en la gráfica
+    def pintar_defectos(self, choice, temperatura, valores_rectas):
+        m1 = valores_rectas[0]
+        b1 = valores_rectas[1]
+        m2 = valores_rectas[2]
+        b2 = valores_rectas[3]
+
+        lista_valores_k_1, Et_1 = functions_timelife.calculo_linea_defecto(m1, b1, temperatura)
+        if (m2 !=None and b2 != None):
+            lista_valores_k_2, Et_2 = functions_timelife.calculo_linea_defecto(m2, b2, temperatura)
 
         # Cargar el Excel con los valores de los defectos
-        file_path = os.path.join(os.getcwd(), 'data_defects_Etk.xlsx')
+        #file_path = os.path.join(os.getcwd(), 'data_defects_Etk.xlsx') ##Se puede usar un excel con datos mucho mas amplios
+        file_path = os.path.join(os.getcwd(), 'data_defects_Etk_reduced.xlsx')
         df = pd.read_excel(file_path)
+
+        #Almacenar los datos en un dataframe           
+        data = pd.DataFrame({
+            "k Rojo": lista_valores_k_1,
+            "Et Rojo": Et_1,
+            "k Azul": lista_valores_k_2,
+            "Et Azul": Et_2
+            })
+            #Pasamos los datos a un excel con una anchura de columnas dada
+        excel_formatter.format_and_save_to_excel(data, "Lifetime.xlsx", "Defectos", "TableStyleMedium5", column_widths=[25, 25, 25, 25])
 
         # Extraer los datos relevantes
         x = df['Et-Ev (eV)']
         y = df['k']
         labels = df['Element']
 
-        fig = plt.figure(figsize=(12, 8))
-        ax = fig.add_subplot()
-        plt.subplots_adjust(right=0.83, bottom=0.15)
-        ax.clear()
-        ax.scatter(x, y)
+        # Crear la figura
+        fig = go.Figure()
 
-        # Añadir los nombres de los defectos a cada punto
-        for i, label in enumerate(labels):
-            ax.text(x[i], y[i], label, fontsize=12)
+        # Añadir los puntos de los defectos
+        fig.add_trace(go.Scatter(
+            x=x, y=y,
+            mode='markers+text',
+            text=labels,
+            textposition='top center',
+            marker=dict(size=10),
+            name='Defectos'
+        ))
 
-        ax.semilogy(Et, lista_valores_k, marker ='o', markersize=3, color ='red')
-        ax.set_title(f"Defectos -{choice} Mode")
-        ax.set_xlabel("Et - Ev (eV)")
-        ax.set_ylabel("kDPSS")
-        # Configurar los ticks del eje Y manualmente
-        yticks = [0.01, 0.1, 1, 10, 100, 1000, 10000]
-        ax.set_yticks(yticks)
-        ax.set_yticklabels([f'{tick:.2f}' if tick < 0.1 else f'{tick:.1f}' if tick < 1 else f'{int(tick)}' for tick in yticks])
+        # Añadir la línea de defectos de la primera recta calculada
+        fig.add_trace(go.Scatter(
+            x=Et_1, y=lista_valores_k_1,
+            mode='lines+markers',
+            marker=dict(size=5, color='red'),
+            line=dict(color='red'),
+            name='Línea de Defecto 1'
+        ))
+        # Añadir la línea de defectos de la segunda recta calculada 
+        if (m2 !=None and b2 != None):
+            fig.add_trace(go.Scatter(
+                x=Et_2, y=lista_valores_k_2,
+                mode='lines+markers',
+                marker=dict(size=5, color='blue'),
+                line=dict(color='blue'),
+                name='Línea de Defecto 2' 
+            ))
 
-        # Configurar los límites de los ejes
-        ax.set_xlim(0, 1.1242)
-        #ax.set_ylim(0.1, 200)
-        ax.grid(which='both', axis='both', linestyle=':', linewidth=0.5)
-        fig.canvas.draw_idle()
-        plt.pause(0.0001)
+        # Configurar el título y los ejes
+        fig.update_layout(
+            title=f"Defectos - {choice} Mode",
+            xaxis_title="Et - Ev (eV)",
+            yaxis_title="kDPSS",
+            yaxis_type="log",
+            yaxis=dict(
+                tickmode='array',
+               tickvals=[0.01, 0.1, 1, 10, 100, 1000, 10000],
+                ticktext=['0.01', '0.1', '1', '10', '100', '1000', '10000']
+            ),
+            xaxis=dict(range=[0, 1.1242]),
+            height=800,
+            width=1200
+        )
 
-        # Se muestra la gráfica
-        plt.ion()
-        plt.show(block=False)
+        # Mostrar la figura
+        fig.show()
 
 
     ######################################################################################
     ######################################################################################
+
+    def pintar_tau_n0(self, choice, temperatura, m, b, color_recta):
+
+        taun0, Et = functions_timelife.calculo_tau_n0(m, b, temperatura)
+
+        # Crear la figura
+        fig = go.Figure()
+
+        # Añadir la línea de defectos de la primera recta calculada
+        fig.add_trace(go.Scatter(
+            x=Et, y=taun0,
+            mode='lines+markers',
+            marker=dict(size=5, color=color_recta),
+            line=dict(color=color_recta),
+            name='Línea de Defecto'
+        ))
+
+        # Configurar el título y los ejes
+        fig.update_layout(
+            title=f"Defecto 1",
+            xaxis_title="Et - Ev (eV)",
+            yaxis_title=f"{tau}n0 [us]",
+            height=800,
+            width=1200
+        )
+        if(color_recta == 'red'):
+            fig.update_layout(
+            title="Defecto 1"
+            )
+        elif(color_recta == 'blue'):
+            fig.update_layout(
+            title="Defecto 2"
+            )
+        # Mostrar la figura
+        fig.show()
+
+
+    ######################################################################################
+    ######################################################################################
+
         
     def pintar_todas_movilidades(self, choice, temperatura):
         lista_densidadPortadoresSinton = self.densidad_portadoresSintonList(choice, temperatura)

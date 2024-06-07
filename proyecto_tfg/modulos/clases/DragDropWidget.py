@@ -50,18 +50,21 @@ class DragDropWidget(QWidget):
             event.ignore()
 
     def dropEvent(self, event: QDropEvent):
+        global temp
         # Leer el archivo y mostrar los datos en la consola
         for url in event.mimeData().urls():
             self.path = url.toLocalFile()  # Almacenar la ruta del archivo en la variable de instancia
-            if self.path.endswith('.csv') or self.path.endswith('.txt'):
+            if self.path.endswith('.csv') or self.path.endswith('.txt') or self.path.endswith('.xlsx'):
                 self.Measurebutton.setEnabled(True)
-                grafica_referencia=ReferenceGraphic() 
-                grafica_referencia.pintar(self.path) # Pasar la ruta del archivo a la función pintar
-                self.label.setText(f'Se importó el archivo "{self.path}"')
-            elif self.path.endswith('.xlsx'):
-                self.Measurebutton.setEnabled(True)
-                grafica_referencia=ReferenceGraphic() 
-                grafica_referencia.pintar(self.path) # Pasar la ruta del archivo a la función pintar
+                grafica_referencia = ReferenceGraphic()
+                grafica_referencia.pintar(self.path)  # Pasar la ruta del archivo a la función pintar
+
+                objeto_pintar = LifetimeGraphic(self.path)
+                val, ok = QInputDialog.getDouble(self, "Temperatura", "Ingrese el valor de la temperatura en Celsius:")
+                if ok:
+                    objeto_pintar.pintar_todas_movilidades("Todas las movilidades", val)  # Pintar todas las movilidades 
+                    temp = val
+
                 self.label.setText(f'Se importó el archivo "{self.path}"')
             else:
                 print("Error: el archivo debe ser un archivo CSV o Excel.")
@@ -72,7 +75,7 @@ class DragDropWidget(QWidget):
         objeto_pintar = LifetimeGraphic(self.path)
         while True:
             # Muestra un cuadro para que el usuario escoja entre las opciones
-            options = ["Escoge una opción:","Sinton", "Dorkel", "Klaassen","Schindler" ,"Todas las movilidades" ,"Sinton-Intrinseco", "Dorkel-Intrinseco", "Klaassen-Intrinseco", "Schindler-Intrinseco","Sinton-SRH","SRH-X"]
+            options = ["Escoge una opción:","Sinton", "Dorkel", "Klaassen","Schindler" ,"Sinton-Intrinseco", "Dorkel-Intrinseco", "Klaassen-Intrinseco", "Schindler-Intrinseco"]
             choice, _ = QInputDialog.getItem(self, 'Selección de opción', 'Seleccione una opción:', options )
             self.choice = choice
             funciones_modo = {
@@ -80,30 +83,16 @@ class DragDropWidget(QWidget):
             "Dorkel": objeto_pintar.pintar_tiempo_recombinacion_temperatura,
             "Klaassen": objeto_pintar.pintar_tiempo_recombinacion_temperatura,
             "Schindler": objeto_pintar.pintar_tiempo_recombinacion_temperatura,
-            "Todas las movilidades": objeto_pintar.pintar_todas_movilidades,
             "Sinton-Intrinseco": objeto_pintar.pintar_tiempo_intrinseco,
             "Dorkel-Intrinseco": objeto_pintar.pintar_tiempo_intrinseco,
             "Klaassen-Intrinseco": objeto_pintar.pintar_tiempo_intrinseco,
-            "Schindler-Intrinseco": objeto_pintar.pintar_tiempo_intrinseco,
-            "Sinton-SRH": objeto_pintar.pintar_tiempo_SRH,
-            "SRH-X": objeto_pintar.pintar_SRH_X
+            "Schindler-Intrinseco": objeto_pintar.pintar_tiempo_intrinseco
             }
             if choice in funciones_modo:
                 if choice == "Sinton":
                     funciones_modo[choice](self.choice, None)
-                elif choice == "Sinton-SRH":
-                    # Obtener el valor de la temperatura
-                    val_temp, ok_temp = QInputDialog.getDouble(self, "Temperatura", "Ingrese el valor de la temperatura en Celsius:")
-                    if ok_temp:
-                        # Obtener el valor de Joe
-                        val_J0e, ok_J0e = QInputDialog.getDouble(self, "J0e", "Ingrese el valor de J0e:")
-                        if ok_J0e:
-                            funciones_modo[choice](self.choice, val_temp, val_J0e)  # Llamar a la función con los valores de temperatura y Joe
-                        break
                 else:
-                    val, ok = QInputDialog.getDouble(self, "Temperatura", "Ingrese el valor de la temperatura en Celsius:")
-                    if ok:
-                        funciones_modo[choice](self.choice, val)
+                    funciones_modo[choice](self.choice, temp)
                 break
             else:
                 QMessageBox.about(self, "Error", "Debe escoger una opción válida.")

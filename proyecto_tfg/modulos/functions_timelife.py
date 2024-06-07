@@ -224,3 +224,30 @@ def calculo_linea_defecto(m, b, temperatura):
 
 
     return lista_valores_k, Et
+
+def calculo_tau_n0(m, b, temperatura):
+    # Valores típicos para el silicio
+    Ev = 0.0  # eV
+    Ec = EG  # 1.1242 eV
+
+    taun0 = []
+
+    # Crear un arreglo de 1000 puntos para Et entre Ev y Ec
+    Et = np.linspace(0, EG, 1000)
+    tauuno = m + b
+
+    # Inicializar taun0 con el mismo tamaño que Et
+    taun0 = np.zeros_like(Et)
+
+    for i in range(len(Et)):
+        # Se definen las variables que se van a usar
+        NI = (math.sqrt(NC*NV)) * ((math.e)**((-EG)/(2*K*temperatura)))
+        p0 = NDOP
+        n0 = math.pow(NI,2)/NDOP
+        n1 = NC * math.exp(-(Ec - Et[i]) / (K * temperatura))
+        p1 = NV * math.exp(-(Et[i] - Ev) / (K * temperatura))
+        Q = ((m / tauuno) + (p1 / p0)) / (1 - (n1 / p0) - (m / tauuno))
+        k = Q * (VH / VE)
+        taun0[i] = 1 / b * (1 + 1 / p0 * (Q * n1 + p1)) ** (-1)
+
+    return taun0, Et
