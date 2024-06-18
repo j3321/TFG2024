@@ -30,7 +30,7 @@ def solicitar_valor(mensaje):
         except ValueError:
             print(f"Por favor, introduce un valor numérico válido para {mensaje}.")
 
-print("Valores Tipicos: W[cm]= 0.0300  OPTICAL_FACTOR: 0.70 ") 
+#print("Valores Tipicos: W[cm]= 0.0300  OPTICAL_FACTOR: 0.70 ") 
 W = solicitar_valor("Introduce el valor de W en [cm]: ")
 OPTICAL_FACTOR = solicitar_valor("Introduce el valor de OPTICAL_FACTOR: ")
 #NDOP = solicitar_valor("Introduce el Valor de NDOP en [cm^-3]: ")

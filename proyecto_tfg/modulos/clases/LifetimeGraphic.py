@@ -150,16 +150,22 @@ class LifetimeGraphic:
         lista_densidadPortadores = self.densidad_portadoresList(choice, temperatura)
         lista_tiempo_recombinacion = self.tiempo_recombinacionList(choice, temperatura)
         lista_tiempo_recombinacion_micros = [t * 1e+6 for t in lista_tiempo_recombinacion]  # Conversión a microsegundos
+        
         # Se crea la figura y los ejes con un tamaño determinado    
         fig = plt.figure(figsize=(10, 8))
         ax = fig.add_subplot()
+        plt.subplots_adjust(right=0.83, bottom=0.15)
         # Configurar los límites del deslizador
         slider_ax = plt.axes([0.15, 0.0001, 0.7, 0.03])  # Modificar las coordenadas y del deslizador
         slider = Slider(slider_ax, 'Rango de valores', 1, len(lista_densidadPortadores), valinit=len(lista_densidadPortadores), valstep=1, color ="green")
         # Se define n como global para acceder al numero de elementos en las funciones posteriores
         global n
+
+        button_connected = False  # Bandera para controlar la conexión del botón
+
         def update_graph(val,slider):
             global n
+            nonlocal button_connected
             # Obtener el valor actual del deslizador
             n = int(val)
             # Obtener los subconjuntos de datos a mostrar
@@ -171,14 +177,29 @@ class LifetimeGraphic:
             # Limpiar la figura y graficar los datos actualizados
             ax.clear()
             ax.semilogx(lista_densidadPortadores_variable, lista_tiempo_recombinacion_micros_variable, marker ='o', markersize=3, label="Lifetime", color ='green')
-            ax.set_title(f"Lifetime vs. Carrier Density -{choice} Mode")
-            ax.set_xlabel("Carrier Density (cm^-3)")
+            
+            # Solo conectar el botón una vez
+            if not button_connected:
+                button.on_clicked(clickado)
+                button_connected = True
+            
+            ax.set_title(f"Lifetime vs. Carrier Density -{choice} Mode-")
+            ax.set_xlabel("Carrier Density (cm$^{-3}$)")
             ax.set_ylabel("Lifetime (us)")
             ax.set_ylim(0, None)
             ax.yaxis.set_major_formatter('{:.1f}'.format)
             ax.grid(which='both', axis='both', linestyle=':', linewidth=0.5)
             fig.canvas.draw_idle()
             plt.pause(0.0001)
+
+        
+        def clickado(event):
+            self.pintar_tiempo_intrinseco(choice,temperatura)
+                
+        #Se crea un botón para obtener el tiempo sin Intrinseco
+        button_ax = plt.axes([0.85, 0.8, 0.12, 0.05])  # Ajusta las dimensiones según tus necesidades
+        button = Button(button_ax, 'Calcular J0e', color='lightblue', hovercolor='0.975')
+
         # Conectar el slider a la función de actualización del gráfico
         slider.on_changed(lambda val: update_graph(val,slider))
         # Graficar los datos iniciales
@@ -195,25 +216,23 @@ class LifetimeGraphic:
         lista_densidadPortadores = self.densidad_portadoresList(choice, temperatura)
         fig = plt.figure(figsize=(10, 8))
         ax = fig.add_subplot()
-        ax.grid(which='both', axis='both', linestyle=':', linewidth=0.5)
-        temperatura_kelvin  = temperatura + 273.15
         # se define una temperatura mínima de 300K y se pintan con un intervalo de 50K
         # las gráficas sucesivas
-        while temperatura_kelvin >= 300:
-                lista_densidadPortadores = self.densidad_portadoresList(choice, temperatura_kelvin)
-                lista_tiempo_recombinacion = self.tiempo_recombinacionList(choice, temperatura_kelvin)
+        while temperatura >= 300:
+                lista_densidadPortadores = self.densidad_portadoresList(choice, temperatura)
+                lista_tiempo_recombinacion = self.tiempo_recombinacionList(choice, temperatura)
                 lista_tiempo_recombinacion_micros = [t * 1e+6 for t in lista_tiempo_recombinacion]  # Conversión a microsegundos
-                data = pd.DataFrame({"Carrier Density (cm^-3)": lista_densidadPortadores[:n], "Lifetime (us)": lista_tiempo_recombinacion_micros[:n]})
+                data = pd.DataFrame({"Carrier Density (cm$^{-3}$)": lista_densidadPortadores[:n], "Lifetime (us)": lista_tiempo_recombinacion_micros[:n]})
                 # Guardar los datos en un archivo Excel
-                data.to_excel(f"Lifetime_{choice}_Mode_{temperatura_kelvin}K.xlsx", index=False)
+                data.to_excel(f"Lifetime_{choice}_Mode_{temperatura}K.xlsx", index=False)
                 ax.semilogx(lista_densidadPortadores[:n], lista_tiempo_recombinacion_micros[:n], marker ='o', markersize=3, label="Lifetime")
-                ax.text(lista_densidadPortadores[0], lista_tiempo_recombinacion_micros[0], f"{temperatura_kelvin} K", fontsize=8)
-                ax.set_title(f"Lifetime vs. Carrier Density -{choice} Mode") 
-                ax.set_xlabel("Carrier Density (cm^-3)")
+                ax.text(lista_densidadPortadores[0], lista_tiempo_recombinacion_micros[0], f"{temperatura} K", fontsize=8)
+                ax.set_title(f"Lifetime vs. Carrier Density -{choice} Mode-") 
+                ax.set_xlabel("Carrier Density (cm$^{-3}$)")
                 ax.set_ylabel("Lifetime (us)")
                 ax.set_ylim(0, None)
                 ax.yaxis.set_major_formatter('{:.1f}'.format)
-                temperatura_kelvin-=50
+                temperatura-=50
         plt.show(block=False)
 
 
@@ -264,7 +283,7 @@ class LifetimeGraphic:
 
             #Almacenar los datos en un dataframe           
             data = pd.DataFrame({
-                "Carrier Density (cm^-3)": lista_densidadPortadores_filtrada_variable,
+                "Carrier Density (cm$^{-3}$)": lista_densidadPortadores_filtrada_variable,
                 f"1/{tau} eff - 1/{tau} intrinseco": lista_tiempo_srh_filtrada_variable,
                 "J0E": J0E,
                 "J0e medio": np.mean(J0E),
@@ -300,16 +319,16 @@ class LifetimeGraphic:
             value_ax = fig.add_axes([0.85, 0.6, 0.12, 0.05])
             value_ax.set_xticks([])  # Ocultar ticks del eje X
             value_ax.set_yticks([])  # Ocultar ticks del eje Y
-            value_ax.text(0.5, 0.5, f'J0e: { J0E_suavizado_2_mean:.4e}', horizontalalignment='center', verticalalignment='center', transform=value_ax.transAxes)
+            value_ax.text(0.5, 0.5, f'J0e: { J0E_suavizado_2_mean:.4e} A/cm$^2$', horizontalalignment='center', verticalalignment='center', transform=value_ax.transAxes)
 
             # Solo conectar el botón una vez
             if not button_connected:
                 button.on_clicked(clickado)
                 button_connected = True
 
-            ax.set_title(f"Lifetime & -{choice} Mode")
-            ax.set_xlabel("Carrier Density (cm^-3)")
-            ax.set_ylabel(f"1/{tau} eff - 1/{tau} intrinseco")
+            ax.set_title(f"Lifetime less Intrinsic -{choice} Mode-")
+            ax.set_xlabel("Carrier Density (cm$^-3$)")
+            ax.set_ylabel(f"1/{tau} eff - 1/{tau} intrinsic"" (s$^{-1}$)")
             ax.grid(which='both', axis='both', linestyle=':', linewidth=0.5)
             ax.legend()
             plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
@@ -322,20 +341,13 @@ class LifetimeGraphic:
                 else:
                     QMessageBox.critical(None, 'Error', 'J0e no puede ser negativo, revisa si estas en alta inyección"')
 
-
         #Se crea un botón para obtener el tiempo SRH
         button_ax = plt.axes([0.85, 0.4, 0.12, 0.05])  # Ajusta las dimensiones según tus necesidades
         button = Button(button_ax, 'SRH Lifetime', color='lightblue', hovercolor='0.975')
-        #button.label.set_fontsize(14)
-        #button.on_clicked(clickado)
         
-
         # Posición del checkbox
         check_ax = fig.add_axes([0.85, 0.8, 0.12, 0.05])  # [left, bottom, width, height]
         check = CheckButtons(check_ax, ['Suavizar Datos'], [False])
-            # Ajustar el tamaño de la fuente del checkbox
-        #for label in check.labels:
-            #label.set_fontsize(14)
         #Cuando se pulsa el boton se actualiza la grafica a suavizada
         check.on_clicked(update_graph)
 
@@ -415,7 +427,7 @@ class LifetimeGraphic:
             #Almacenar los datos en un dataframe           
             data = pd.DataFrame({
                 "Carrier Density (cm^-3)": lista_densidadPortadores_filtrada_variable,
-                f"1/{tau} eff - 1/{tau} intrinseco": lista_tiempo_srh_micros_variable,
+                f"1/{tau} eff - 1/{tau} intrinsic": lista_tiempo_srh_micros_variable,
                 f"{tau} SRH (us)": lista_srh_independiente_micros
 
             })
@@ -447,8 +459,8 @@ class LifetimeGraphic:
             ##Muestra valores SRH frente a la densidad de portadores
             #ax.loglog(lista_densidadPortadores_filtrada_variable,lista_srh_independiente_micros, marker ="8", markersize = 6, color ="blue")
 
-            ax.set_title(f"Lifetime & {tau} SRH") 
-            ax.set_xlabel("Carrier Density (cm^-3)")
+            ax.set_title(f"SRH Lifetime vs. Carrier Density (J0e = {j0e:.4e} A/cm$^2$) -{choice} Mode-") 
+            ax.set_xlabel("Carrier Density (cm$^{-3}$)")
             ax.set_ylabel(f"{tau} SRH (us)")
             ax.grid(which='both', axis='both', linestyle=':', linewidth=0.5)
             ax.legend()
@@ -458,7 +470,7 @@ class LifetimeGraphic:
 
       
         def clickado(event):
-            self.pintar_SRH_X(choice,temperatura,lista_srh_fin, lista_X_variable)
+            self.pintar_SRH_X(choice,temperatura,lista_srh_fin, lista_X_variable,j0e)
 
 
         #Se crea un botón para obtener el tiempo SRH
@@ -498,7 +510,7 @@ class LifetimeGraphic:
     ######################################################################################
 
 
-    def pintar_SRH_X(self, choice, temperatura, lista_srh_independiente_micros,lista_X ):
+    def pintar_SRH_X(self, choice, temperatura, lista_srh_independiente_micros,lista_X, J0ee ):
 
         lista_X_filtrada = [num for num in lista_X if num >=0]
 
@@ -515,6 +527,7 @@ class LifetimeGraphic:
             global n
             global s        
             global valores_rectas
+            global R2
             nonlocal button_connected
             R2 = 0
 
@@ -542,9 +555,6 @@ class LifetimeGraphic:
             fit_values_1recta, r2_1, m_1recta, b_1recta = functions_curvefit.one_linear_fit(lista_X_filtrada_variable_suave_3, lista_srh_independiente_micros_variable_suave_3)
             #Se saca los valores a dos rectas
             fit_values_1, fit_values_2, fit_values, r2_2, m1, m2, b1, b2 = functions_curvefit.dual_linear_fit(lista_X_filtrada_variable_suave_3, lista_srh_independiente_micros_variable_suave_3)
-
-            #Creamos un array para guardar los valores de las rectas:
-            valores_rectas = [None, None, None, None]
 
             #Almacenar los datos en un dataframe           
             data2 = pd.DataFrame({
@@ -590,26 +600,34 @@ class LifetimeGraphic:
                 button.on_clicked(clickado)
                 button_connected = True
 
-            ax.set_title(f"X(n/p) - SRH Lifetime -{choice} Mode") 
+            ax.set_title(f"SRH Lifetime vs X (J0e = {J0ee:.4e} A/cm$^2$) -{choice} Mode-") 
             ax.set_xlabel("X(n/p)")
-            ax.set_ylabel("Lifetime SRH (us)")
+            ax.set_ylabel(f"{tau} SRH (us)")
             ax.grid(which='both', axis='both', linestyle=':', linewidth=0.5)
             ax.legend()
             plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
+
+            # Calcular el límite superior del eje y
+            max_y = max(lista_srh_independiente_micros_variable_suave_3)
+            min_y = min(lista_srh_independiente_micros_variable_suave_3)
+
+            ax.set_ylim(min_y * 0.85, max_y * 1.3)  # Establecer el límite superior en 125% del valor máximo
+
+
             fig.canvas.draw_idle()
             plt.pause(0.1)
 
 
         def clickado(event):
             #Pinta la grafica con los defectos
-            self.pintar_defectos(choice, temperatura, valores_rectas)
+            self.pintar_defectos(choice, temperatura, valores_rectas , R2)
             #Si esta seleccionado 1 linea se pinta una grafica de esa linea
             if(check.get_status()[0]):
-                self.pintar_tau_n0(choice, temperatura, valores_rectas[0], valores_rectas[1], 'red')
+                self.pintar_tau_n0(choice, temperatura, valores_rectas[0], valores_rectas[1], 'red', R2)
             #Si esta seleccionado 2 lineas se pintan dos graficas una con cada linea
             elif(check_2.get_status()[0]):
-                self.pintar_tau_n0(choice, temperatura, valores_rectas[0], valores_rectas[1], 'red')
-                self.pintar_tau_n0(choice, temperatura, valores_rectas[2], valores_rectas[3], 'blue')
+                self.pintar_tau_n0(choice, temperatura, valores_rectas[0], valores_rectas[1], 'red', R2)
+                self.pintar_tau_n0(choice, temperatura, valores_rectas[2], valores_rectas[3], 'blue', R2)
 
 
 
@@ -653,8 +671,8 @@ class LifetimeGraphic:
     ######################################################################################
     ######################################################################################
 
-    #Posible mejora con zoom en la gráfica
-    def pintar_defectos(self, choice, temperatura, valores_rectas):
+
+    def pintar_defectos(self, choice, temperatura, valores_rectas, r2):
         m1 = valores_rectas[0]
         b1 = valores_rectas[1]
         m2 = valores_rectas[2]
@@ -717,7 +735,7 @@ class LifetimeGraphic:
 
         # Configurar el título y los ejes
         fig.update_layout(
-            title=f"Defectos - {choice} Mode",
+            title=f"Defectos R<sup>2</sup>: {r2:.5f} -{choice} Mode-",
             xaxis_title="Et - Ev (eV)",
             yaxis_title="kDPSS",
             yaxis_type="log",
@@ -738,7 +756,7 @@ class LifetimeGraphic:
     ######################################################################################
     ######################################################################################
 
-    def pintar_tau_n0(self, choice, temperatura, m, b, color_recta):
+    def pintar_tau_n0(self, choice, temperatura, m, b, color_recta, r2):
 
         taun0, Et = functions_timelife.calculo_tau_n0(m, b, temperatura)
 
@@ -764,11 +782,11 @@ class LifetimeGraphic:
         )
         if(color_recta == 'red'):
             fig.update_layout(
-            title="Defecto 1"
+            title=f"Defecto 1 R<sup>2</sup>: { r2:.5f}"
             )
         elif(color_recta == 'blue'):
             fig.update_layout(
-            title="Defecto 2"
+            title=f"Defecto 2 R<sup>2</sup>: { r2:.5f}"
             )
         # Mostrar la figura
         fig.show()
@@ -777,7 +795,6 @@ class LifetimeGraphic:
     ######################################################################################
     ######################################################################################
 
-        
     def pintar_todas_movilidades(self, choice, temperatura):
         lista_densidadPortadoresSinton = self.densidad_portadoresSintonList(choice, temperatura)
         lista_tiempo_recombinacionSinton = self.tiempo_recombinacionSintonList(choice, temperatura)
@@ -791,11 +808,33 @@ class LifetimeGraphic:
         lista_tiempo_recombinacionDorkel_micros = [t * 1e+6 for t in lista_tiempo_recombinacionDorkel]  # Conversión a microsegundos
         lista_tiempo_recombinacionKlaassen_micros = [t * 1e+6 for t in lista_tiempo_recombinacionKlaassen]  # Conversión a microsegundos
         lista_tiempo_recombinacionSchindler_micros = [t * 1e+6 for t in lista_tiempo_recombinacionSchindler]  # Conversión a microsegundos
-        fig = plt.figure(figsize=(10, 8))
+        
+        fig = plt.figure(figsize=(12, 8))  # Aumentar el ancho de la figura para hacer espacio para los botones
         ax = fig.add_subplot()
+        plt.subplots_adjust(right=0.83, bottom=0.15)
+
+        button_connected = False  # Bandera para controlar la conexión del botón
+        
+        # Crear los ejes de los botones
+        button_axes = [plt.axes([0.85, 0.8 - i*0.2, 0.1, 0.05]) for i in range(4)] # [left, bottom, width, height]
+        buttons = ['Sinton', 'Dorkel', 'Klaassen', 'Schindler']
+        colors = ['blue', 'orange', 'green', 'red']
+        
+        # Definir la función de callback para los botones
+        def button_callback(event, model):
+            self.pintar_tiempo_recombinacion(model, temperatura)
+        
+        # Crear los botones y asignar las funciones de callback
+        button_objs = [Button(ax, label, color=color) for ax, label, color in zip(button_axes, buttons, colors)]
+        for button, model in zip(button_objs, buttons):
+            button.label.set_color('white')
+
+        
         slider_ax = plt.axes([0.15, 0.0001, 0.7, 0.03])  # Modificar las coordenadas y del deslizador
-        slider = Slider(slider_ax, 'Rango de valores', 1, len(lista_densidadPortadoresSinton), valinit=len(lista_densidadPortadoresSinton), valstep=1, color ="green")
-        def update_graph(val,slider):
+        slider = Slider(slider_ax, 'Rango de valores', 1, len(lista_densidadPortadoresSinton), valinit=len(lista_densidadPortadoresSinton), valstep=1, color="green")
+        
+        def update_graph(val, slider):
+            nonlocal button_connected
             # Obtener el valor actual del deslizador
             n = int(val)
             # Obtener los subconjuntos de datos a mostrar
@@ -807,28 +846,48 @@ class LifetimeGraphic:
             lista_tiempo_recombinacionKlaassen_micros_variabe = lista_tiempo_recombinacionKlaassen_micros[:n]
             lista_densidadPortadoresSchindler_variable = lista_densidadPortadoresSchindler[:n]
             lista_tiempo_recombinacionSchindler_micros_variabe = lista_tiempo_recombinacionSchindler_micros[:n]
-            data = pd.DataFrame({"Carrier Density (cm^-3) Sinton": lista_densidadPortadoresSinton_variable, "Lifetime (us) Sinton": lista_tiempo_recombinacionSinton_micros_variabe, "Carrier Density (cm^-3) Dorkel": lista_densidadPortadoresDorkel_variable,"Lifetime (us) Dorkel" :lista_tiempo_recombinacionDorkel_micros_variabe, "Carrier Density (cm^-3) Klaassen" :lista_densidadPortadoresKlaassen_variable, "Lifetime (us) Klaassen": lista_tiempo_recombinacionKlaassen_micros_variabe, "Carrier Density (cm^-3) Schindler" : lista_densidadPortadoresSchindler_variable, "Lifetime (us) Schindler": lista_tiempo_recombinacionSchindler_micros_variabe  })
+            
+            data = pd.DataFrame({
+                "Carrier Density (cm^-3) Sinton": lista_densidadPortadoresSinton_variable, 
+                "Lifetime (us) Sinton": lista_tiempo_recombinacionSinton_micros_variabe, 
+                "Carrier Density (cm^-3) Dorkel": lista_densidadPortadoresDorkel_variable,
+                "Lifetime (us) Dorkel": lista_tiempo_recombinacionDorkel_micros_variabe, 
+                "Carrier Density (cm^-3) Klaassen": lista_densidadPortadoresKlaassen_variable, 
+                "Lifetime (us) Klaassen": lista_tiempo_recombinacionKlaassen_micros_variabe, 
+                "Carrier Density (cm^-3) Schindler": lista_densidadPortadoresSchindler_variable, 
+                "Lifetime (us) Schindler": lista_tiempo_recombinacionSchindler_micros_variabe
+            })
+            
             # Guardar los datos en un archivo Excel
             data.to_excel("Lifetime_All_Modes.xlsx", index=False)
+            
+            # Solo conectar el botón una vez
+            if not button_connected:
+                for button, model in zip(button_objs, buttons):
+                    button.on_clicked(lambda event, m=model: button_callback(event, m))
+                button_connected = True
             # Limpiar la figura y graficar los datos actualizados
             ax.clear()
-            ax.semilogx(lista_densidadPortadoresSinton_variable, lista_tiempo_recombinacionSinton_micros_variabe, marker ='o', markersize=3, label="Sinton")
-            ax.semilogx(lista_densidadPortadoresDorkel_variable, lista_tiempo_recombinacionDorkel_micros_variabe, marker ='o', markersize=3, label="Dorkel")
-            ax.semilogx(lista_densidadPortadoresKlaassen_variable, lista_tiempo_recombinacionKlaassen_micros_variabe, marker ='o', markersize=3, label="Klaassen")
-            ax.semilogx(lista_densidadPortadoresSchindler_variable, lista_tiempo_recombinacionSchindler_micros_variabe, marker ='o', markersize=3, label="Schindler")
-            ax.set_title("Lifetime vs. Carrier Density All Modes") 
+            ax.semilogx(lista_densidadPortadoresSinton_variable, lista_tiempo_recombinacionSinton_micros_variabe, marker='o', markersize=3, label="Sinton", color="blue")
+            ax.semilogx(lista_densidadPortadoresDorkel_variable, lista_tiempo_recombinacionDorkel_micros_variabe, marker='o', markersize=3, label="Dorkel", color="orange")
+            ax.semilogx(lista_densidadPortadoresKlaassen_variable, lista_tiempo_recombinacionKlaassen_micros_variabe, marker='o', markersize=3, label="Klaassen", color="green")
+            ax.semilogx(lista_densidadPortadoresSchindler_variable, lista_tiempo_recombinacionSchindler_micros_variabe, marker='o', markersize=3, label="Schindler", color="red")
+            
+            ax.set_title("Lifetime vs. Carrier Density All Modes")
             ax.grid(which='both', axis='both', linestyle=':', linewidth=0.5)
-            ax.set_xlabel("Carrier Density (cm^-3)")
+            ax.set_xlabel("Carrier Density (cm$^{-3}$)")
             ax.set_ylabel("Lifetime (us)")
             ax.set_ylim(0, None)
             ax.legend()
             fig.canvas.draw_idle()
             plt.pause(0.0001)
+        
         # Conectar el slider a la función de actualización del gráfico
-        slider.on_changed(lambda val: update_graph(val,slider))
-        update_graph(len(lista_densidadPortadoresSinton),slider)
+        slider.on_changed(lambda val: update_graph(val, slider))
+        update_graph(len(lista_densidadPortadoresSinton), slider)
         plt.ion()
-        plt.show(block = False)
+        plt.show(block=False)
+    
 
 
 

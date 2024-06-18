@@ -180,7 +180,7 @@ def get_SRH(lista_densidad_portadores, lista_tiempo_srh):
 
 #Calculo tiempo SRH
 def get_SRH_con_J0e(lista_densidad_portadores, lista_tiempo_srh, J0e):
-     # Se calcula el valor independiente conocido
+    # Se calcula el valor independiente conocido
     NI = (math.sqrt(NC*NV)) * ((math.e)**((-EG)/(2*K*temperatura)))
     lista_valor_independiente = []
     for i in range(len(lista_densidad_portadores)):
@@ -196,8 +196,7 @@ def get_SRH_con_J0e(lista_densidad_portadores, lista_tiempo_srh, J0e):
 
     SRH = 1 / SRH_denom
 
-
-    # Se crea una lista con los valores srh totalmente independiente de los demas valores(intrinseco,auger y superficial)
+    # Se crea una lista con los valores srh totalmente independiente de las demas componentes(intrinseco,auger y superficial)
     lista_srh_independiente= []
     for j in SRH:
         lista_srh_independiente.append(j)

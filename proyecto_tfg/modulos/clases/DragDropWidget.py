@@ -13,6 +13,7 @@ class DragDropWidget(QWidget):
         self.initUI()
         self.path = None  # Agregar una variable de instancia para almacenar la ruta del archivo
         self.choice = None
+        self.temp = None
 
     def initUI(self):
         self.setWindowTitle('Importa el archivo que quieres analizar')
@@ -49,8 +50,8 @@ class DragDropWidget(QWidget):
         else:
             event.ignore()
 
+
     def dropEvent(self, event: QDropEvent):
-        global temp
         # Leer el archivo y mostrar los datos en la consola
         for url in event.mimeData().urls():
             self.path = url.toLocalFile()  # Almacenar la ruta del archivo en la variable de instancia
@@ -62,8 +63,9 @@ class DragDropWidget(QWidget):
                 objeto_pintar = LifetimeGraphic(self.path)
                 val, ok = QInputDialog.getDouble(self, "Temperatura", "Ingrese el valor de la temperatura en Celsius:")
                 if ok:
-                    objeto_pintar.pintar_todas_movilidades("Todas las movilidades", val)  # Pintar todas las movilidades 
-                    temp = val
+                    self.temp = val + 273.15
+                    objeto_pintar.pintar_todas_movilidades("Todas las movilidades", self.temp)  # Pintar todas las movilidades 
+
 
                 self.label.setText(f'Se importó el archivo "{self.path}"')
             else:
@@ -75,24 +77,20 @@ class DragDropWidget(QWidget):
         objeto_pintar = LifetimeGraphic(self.path)
         while True:
             # Muestra un cuadro para que el usuario escoja entre las opciones
-            options = ["Escoge una opción:","Sinton", "Dorkel", "Klaassen","Schindler" ,"Sinton-Intrinseco", "Dorkel-Intrinseco", "Klaassen-Intrinseco", "Schindler-Intrinseco"]
+            options = ["Escoge una opción:","Sinton", "Dorkel", "Klaassen","Schindler"]
             choice, _ = QInputDialog.getItem(self, 'Selección de opción', 'Seleccione una opción:', options )
             self.choice = choice
             funciones_modo = {
             "Sinton": objeto_pintar.pintar_tiempo_recombinacion,
             "Dorkel": objeto_pintar.pintar_tiempo_recombinacion_temperatura,
             "Klaassen": objeto_pintar.pintar_tiempo_recombinacion_temperatura,
-            "Schindler": objeto_pintar.pintar_tiempo_recombinacion_temperatura,
-            "Sinton-Intrinseco": objeto_pintar.pintar_tiempo_intrinseco,
-            "Dorkel-Intrinseco": objeto_pintar.pintar_tiempo_intrinseco,
-            "Klaassen-Intrinseco": objeto_pintar.pintar_tiempo_intrinseco,
-            "Schindler-Intrinseco": objeto_pintar.pintar_tiempo_intrinseco
+            "Schindler": objeto_pintar.pintar_tiempo_recombinacion_temperatura
             }
             if choice in funciones_modo:
                 if choice == "Sinton":
-                    funciones_modo[choice](self.choice, None)
+                    funciones_modo[choice](self.choice, self.temp)
                 else:
-                    funciones_modo[choice](self.choice, temp)
+                    funciones_modo[choice](self.choice, self.temp)
                 break
             else:
                 QMessageBox.about(self, "Error", "Debe escoger una opción válida.")
