@@ -152,56 +152,7 @@ def custom_gradient(lista_densidad_portadores, lista_tiempo_srh):
 
     return SRH, J0e, lista_srh_ajustada
 
-def get_SRH(lista_densidad_portadores, lista_tiempo_srh):
-     # Se calcula el valor independiente conocido
-    NI = (math.sqrt(NC*NV)) * ((math.e)**((-EG)/(2*K*temperatura)))
-    lista_valor_independiente = []
-    for i in range(len(lista_densidad_portadores)):
-        indice = (NDOP + lista_densidad_portadores[i])/(Q*W*(math.pow(NI,2)))
-        lista_valor_independiente.append(indice)
 
-    # Se formatean a arrays numpy
-    lista_valor_independiente_np = np.array(lista_valor_independiente)
-    lista_tiempo_srh_np = np.array(lista_tiempo_srh)
-
-    # Se calcula la pendiente
-    J0e = np.gradient(lista_tiempo_srh_np, lista_valor_independiente_np)
-
-    # Se calcula el término independiente
-
-    SRH = lista_tiempo_srh_np -  J0e * lista_valor_independiente_np
-
-    # Se crea una lista con los valores srh totalmente independiente de los demas valores(intrinseco,auger y superficial)
-    lista_srh_independiente= []
-    for j in SRH:
-        lista_srh_independiente.append(j)
-
-    return lista_srh_independiente 
-
-#Calculo tiempo SRH
-def get_SRH_con_J0e(lista_densidad_portadores, lista_tiempo_srh, J0e):
-    # Se calcula el valor independiente conocido
-    NI = (math.sqrt(NC*NV)) * ((math.e)**((-EG)/(2*K*temperatura)))
-    lista_valor_independiente = []
-    for i in range(len(lista_densidad_portadores)):
-        indice = (NDOP + lista_densidad_portadores[i])/(Q*W*(math.pow(NI,2)))
-        lista_valor_independiente.append(indice)
-
-    # Se formatean a arrays numpy
-    lista_valor_independiente_np = np.array(lista_valor_independiente)
-    lista_tiempo_srh_np = np.array(lista_tiempo_srh)
-
-    # Se calcula el término independiente
-    SRH_denom = lista_tiempo_srh_np -  ((2 * J0e) * lista_valor_independiente_np)
-
-    SRH = 1 / SRH_denom
-
-    # Se crea una lista con los valores srh totalmente independiente de las demas componentes(intrinseco,auger y superficial)
-    lista_srh_independiente= []
-    for j in SRH:
-        lista_srh_independiente.append(j)
-
-    return lista_srh_independiente, lista_valor_independiente, NI
 
 
 

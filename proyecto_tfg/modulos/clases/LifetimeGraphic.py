@@ -418,7 +418,7 @@ class LifetimeGraphic:
             lista_X_variable = lista_X[s:n]
             
             # Mediante ajuste de curvas calculamos los valores de SRH que mejor se ajustan con un valor de J0e introducido por el usuario
-            lista_srh_independiente,lista_valor_independiente, NI = functions_curvefit.get_SRH_con_J0e(lista_densidadPortadores_filtrada_variable,lista_tiempo_srh_micros_variable,j0e)
+            lista_srh_independiente,lista_valor_independiente, NI = functions_timelife.get_SRH_con_J0e(lista_densidadPortadores_filtrada_variable, lista_tiempo_srh_micros_variable, j0e, temperatura)
             lista_srh_independiente_micros = [t * 1e+6 for t in lista_srh_independiente]
             #Suavizamos la curva de tiempo SRH
             lista_srh_independiente_micros_suave, lista_densidadPortadores_filtrada_suave = functions_curvefit.suavizado_curva(lista_srh_independiente_micros, lista_densidadPortadores_filtrada_variable)
