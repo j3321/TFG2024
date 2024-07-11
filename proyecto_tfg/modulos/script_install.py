@@ -1,21 +1,17 @@
 #Este script tiene como función el instalar en el ordenador las librerías 
-#necesarias para que se pueda ejecutar el programa
+#necesarias para que se pueda ejecutar el programa, todas ellas se encuentran
+#en el archivo requeriments.tx
 import subprocess
+import sys
 
-# Comando de instalación
-comandos = [
-    "pip3 install pyqt5",
-    "pip3 install pandas",
-    "pip3 install numpy",
-    "pip3 install simpy",
-    "pip3 install matplotlib",
-    "pip install scipy",
-    "pip install statsmodels"
-]
-
-# Ejecutar comandos uno por uno en el terminar para instalar las librerías
-for comando in comandos:
+def install_requirements():
     try:
-        subprocess.check_call(comando, shell=True)
+        # Llama a pip para instalar las dependencias desde requirements.txt
+        subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-r', 'requirements.txt'])
+        print("Todas las dependencias se han instalado correctamente.")
     except subprocess.CalledProcessError as e:
-        print(f"Se ha producido un error: {comando}")
+        print(f"Error durante la instalación de dependencias: {e}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    install_requirements()
